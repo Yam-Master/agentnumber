@@ -1,47 +1,6 @@
-"use client";
-
-import { useState } from "react";
 import Link from "next/link";
 
-const personalities = [
-  { id: "friendly", label: "Friendly Assistant", emoji: "😊" },
-  { id: "comedian", label: "Sarcastic Comedian", emoji: "😏" },
-  { id: "sales", label: "Sales Rep", emoji: "💼" },
-  { id: "techsupport", label: "Tech Support", emoji: "🔧" },
-];
-
 export default function Home() {
-  const [phone, setPhone] = useState("");
-  const [personality, setPersonality] = useState("friendly");
-  const [status, setStatus] = useState<
-    "idle" | "loading" | "success" | "error"
-  >("idle");
-  const [errorMsg, setErrorMsg] = useState("");
-
-  async function handleCall() {
-    if (!phone.trim()) return;
-    setStatus("loading");
-    setErrorMsg("");
-
-    try {
-      const res = await fetch("/api/demo-call", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phoneNumber: phone, personality }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setStatus("error");
-        setErrorMsg(data.error || "Something went wrong");
-        return;
-      }
-      setStatus("success");
-    } catch {
-      setStatus("error");
-      setErrorMsg("Network error. Please try again.");
-    }
-  }
-
   return (
     <div className="min-h-screen bg-background font-sans">
       {/* Nav */}
@@ -58,7 +17,7 @@ export default function Home() {
             href="/signup"
             className="text-sm bg-accent hover:bg-accent-light text-white px-4 py-2 rounded-lg transition-colors"
           >
-            Sign up
+            Get started
           </Link>
         </div>
       </nav>
@@ -66,108 +25,82 @@ export default function Home() {
       {/* Hero */}
       <section className="max-w-6xl mx-auto px-6 pt-24 pb-16 text-center">
         <h1 className="text-5xl sm:text-6xl font-bold tracking-tight leading-tight">
-          Give your AI agent
+          Give your agent
           <br />
           <span className="text-accent-light">a phone number</span>
         </h1>
-        <p className="mt-6 text-lg text-muted max-w-xl mx-auto">
-          One API call. Your agent can make and receive phone calls. Build voice
-          AI experiences in minutes, not months.
+        <p className="mt-6 text-lg text-muted max-w-2xl mx-auto">
+          One API call. Your AI agent gets a real phone number with
+          speech-to-text and text-to-speech built in. You bring the brain, we
+          handle the voice.
         </p>
-        <a
-          href="#demo"
-          className="inline-block mt-8 bg-accent hover:bg-accent-light text-white text-lg font-medium px-8 py-3 rounded-xl transition-colors"
-        >
-          Try it now
-        </a>
+        <div className="flex gap-4 justify-center mt-10">
+          <Link
+            href="/signup"
+            className="bg-accent hover:bg-accent-light text-white text-lg font-medium px-8 py-3 rounded-xl transition-colors"
+          >
+            Get started
+          </Link>
+          <a
+            href="#how-it-works"
+            className="border border-border hover:border-zinc-500 text-foreground text-lg font-medium px-8 py-3 rounded-xl transition-colors"
+          >
+            How it works
+          </a>
+        </div>
       </section>
 
-      {/* Demo Section */}
-      <section id="demo" className="max-w-xl mx-auto px-6 py-16">
-        <div className="rounded-2xl border border-border bg-zinc-900/50 p-8">
-          <h2 className="text-2xl font-bold text-center mb-2">
-            Get a call from an AI agent
-          </h2>
-          <p className="text-muted text-center mb-8 text-sm">
-            Enter your phone number and we&apos;ll call you in ~10 seconds.
-          </p>
-
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm text-muted mb-1.5">
-                Phone number
-              </label>
-              <input
-                type="tel"
-                placeholder="+1 (555) 123-4567"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="w-full bg-zinc-800 border border-border rounded-lg px-4 py-3 text-foreground placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-accent"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm text-muted mb-1.5">
-                Personality
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                {personalities.map((p) => (
-                  <button
-                    key={p.id}
-                    onClick={() => setPersonality(p.id)}
-                    className={`px-3 py-2.5 rounded-lg border text-sm text-left transition-colors ${
-                      personality === p.id
-                        ? "border-accent bg-accent/10 text-foreground"
-                        : "border-border bg-zinc-800/50 text-muted hover:border-zinc-600"
-                    }`}
-                  >
-                    {p.emoji} {p.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <button
-              onClick={handleCall}
-              disabled={status === "loading" || !phone.trim()}
-              className="w-full bg-accent hover:bg-accent-light disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-3 rounded-lg transition-colors mt-2"
-            >
-              {status === "loading" ? "Calling..." : "Call me now"}
-            </button>
-
-            {status === "success" && (
-              <div className="text-center text-green-400 text-sm mt-2">
-                Call initiated! Your phone should ring any moment.
-              </div>
-            )}
-            {status === "error" && (
-              <div className="text-center text-red-400 text-sm mt-2">
-                {errorMsg}
-              </div>
-            )}
+      {/* Code example */}
+      <section className="max-w-2xl mx-auto px-6 pb-20">
+        <div className="rounded-2xl border border-border bg-zinc-900/50 p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-3 h-3 rounded-full bg-red-500/60" />
+            <div className="w-3 h-3 rounded-full bg-yellow-500/60" />
+            <div className="w-3 h-3 rounded-full bg-green-500/60" />
+            <span className="text-xs text-muted ml-2">provision a number</span>
           </div>
+          <pre className="text-sm text-green-400 overflow-x-auto">
+{`curl -X POST https://agentnumber.com/api/v0/numbers \\
+  -H "Authorization: Bearer an_live_..." \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "webhook_url": "https://your-agent.com/voice",
+    "area_code": "415"
+  }'`}
+          </pre>
+          <pre className="text-sm text-zinc-400 mt-4 overflow-x-auto">
+{`{
+  "id": "num_a1b2c3d4",
+  "phone_number": "+14155551234",
+  "webhook_url": "https://your-agent.com/voice",
+  "status": "active"
+}`}
+          </pre>
         </div>
       </section>
 
       {/* How it works */}
-      <section className="max-w-4xl mx-auto px-6 py-16">
-        <h2 className="text-3xl font-bold text-center mb-12">How it works</h2>
+      <section id="how-it-works" className="max-w-4xl mx-auto px-6 py-16">
+        <h2 className="text-3xl font-bold text-center mb-4">How it works</h2>
+        <p className="text-muted text-center mb-12 max-w-xl mx-auto">
+          Your agent already has a brain. We give it a voice and a phone number.
+        </p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
           {[
             {
               step: "1",
-              title: "Create an agent",
-              desc: "Define your agent's personality, voice, and system prompt.",
+              title: "Get a number",
+              desc: "Provision a real US phone number via API. Choose your area code.",
             },
             {
               step: "2",
-              title: "Get a phone number",
-              desc: "We provision a real phone number for your agent instantly.",
+              title: "Point to your agent",
+              desc: "Set your webhook URL. We send transcribed speech, your agent responds with text.",
             },
             {
               step: "3",
-              title: "Start calling",
-              desc: "Your agent can make outbound calls or receive inbound ones.",
+              title: "Calls just work",
+              desc: "Inbound and outbound. We handle STT and TTS. Your agent handles the conversation.",
             },
           ].map((item) => (
             <div key={item.step} className="text-center">
@@ -181,17 +114,113 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Architecture */}
+      <section className="max-w-3xl mx-auto px-6 py-16">
+        <div className="rounded-2xl border border-border bg-zinc-900/50 p-8">
+          <h2 className="text-2xl font-bold text-center mb-8">The voice pipeline</h2>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-sm">
+            <div className="bg-zinc-800 border border-border rounded-xl px-5 py-3 text-center">
+              <div className="text-muted text-xs mb-1">Caller</div>
+              <div className="font-semibold">Phone</div>
+            </div>
+            <span className="text-muted hidden sm:block">&rarr;</span>
+            <span className="text-muted sm:hidden">&darr;</span>
+            <div className="bg-zinc-800 border border-border rounded-xl px-5 py-3 text-center">
+              <div className="text-muted text-xs mb-1">AgentNumber</div>
+              <div className="font-semibold">STT + TTS</div>
+            </div>
+            <span className="text-muted hidden sm:block">&rarr;</span>
+            <span className="text-muted sm:hidden">&darr;</span>
+            <div className="bg-accent/20 border border-accent/40 rounded-xl px-5 py-3 text-center">
+              <div className="text-accent-light text-xs mb-1">Your server</div>
+              <div className="font-semibold">Your Agent</div>
+            </div>
+          </div>
+          <p className="text-muted text-xs text-center mt-6">
+            Caller speaks &rarr; we transcribe &rarr; your agent thinks &rarr; we speak the response
+          </p>
+        </div>
+      </section>
+
+      {/* Features */}
+      <section className="max-w-4xl mx-auto px-6 py-16">
+        <h2 className="text-3xl font-bold text-center mb-12">Built for agents</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          {[
+            {
+              title: "Framework agnostic",
+              desc: "OpenAI, Anthropic, LangChain, custom — if it responds to HTTP, it works.",
+            },
+            {
+              title: "Real phone numbers",
+              desc: "US numbers with any area code. Inbound and outbound calling.",
+            },
+            {
+              title: "Pay with USDC",
+              desc: "x402 protocol. Your agent pays on-chain, no credit cards needed.",
+            },
+            {
+              title: "Webhooks",
+              desc: "Get notified on call events, transcripts, and recordings via HMAC-signed webhooks.",
+            },
+            {
+              title: "Call history API",
+              desc: "Full transcripts, recordings, duration, and cost tracking per call.",
+            },
+            {
+              title: "Sub-second latency",
+              desc: "Streaming STT/TTS pipeline for real-time, natural conversations.",
+            },
+          ].map((f) => (
+            <div
+              key={f.title}
+              className="rounded-xl border border-border bg-zinc-900/50 p-5"
+            >
+              <h3 className="font-semibold mb-1">{f.title}</h3>
+              <p className="text-sm text-muted">{f.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Pricing */}
+      <section className="max-w-xl mx-auto px-6 py-16 text-center">
+        <h2 className="text-3xl font-bold mb-4">Simple pricing</h2>
+        <p className="text-muted mb-8">No subscriptions. Pay as you go.</p>
+        <div className="rounded-2xl border border-border bg-zinc-900/50 p-8">
+          <div className="space-y-3 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted">Phone number</span>
+              <span className="font-medium">$5.00 / number</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted">Outbound calls</span>
+              <span className="font-medium">$0.05 / min</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted">Inbound calls</span>
+              <span className="font-medium">$0.03 / min</span>
+            </div>
+          </div>
+          <div className="border-t border-border mt-6 pt-6">
+            <p className="text-xs text-muted">
+              Credits purchased via USDC (x402). Minimum purchase $10.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* CTA */}
       <section className="max-w-xl mx-auto px-6 py-16 text-center">
-        <h2 className="text-3xl font-bold mb-4">Ready to build?</h2>
+        <h2 className="text-3xl font-bold mb-4">Your agent deserves a voice</h2>
         <p className="text-muted mb-8">
-          Create your own AI phone agent in under 5 minutes.
+          Get a phone number in one API call. Start building today.
         </p>
         <Link
           href="/signup"
           className="inline-block bg-accent hover:bg-accent-light text-white text-lg font-medium px-8 py-3 rounded-xl transition-colors"
         >
-          Create your agent
+          Get started
         </Link>
       </section>
 

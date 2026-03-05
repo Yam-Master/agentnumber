@@ -30,13 +30,25 @@ export default async function DashboardLayout({
                 href="/dashboard"
                 className="text-muted hover:text-foreground transition-colors"
               >
-                Agents
+                Overview
               </Link>
               <Link
                 href="/dashboard/calls"
                 className="text-muted hover:text-foreground transition-colors"
               >
-                Call Log
+                Calls
+              </Link>
+              <Link
+                href="/dashboard/api-keys"
+                className="text-muted hover:text-foreground transition-colors"
+              >
+                API Keys
+              </Link>
+              <Link
+                href="/dashboard/credits"
+                className="text-muted hover:text-foreground transition-colors"
+              >
+                Credits
               </Link>
             </div>
           </div>
