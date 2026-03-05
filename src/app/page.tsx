@@ -6,188 +6,309 @@ export default function Home() {
       {/* Nav */}
       <nav className="flex items-center justify-between px-6 py-4 max-w-6xl mx-auto">
         <span className="text-xl font-bold tracking-tight">AgentNumber</span>
-        <div className="flex gap-4 items-center">
-          <Link
-            href="/login"
-            className="text-sm text-muted hover:text-foreground transition-colors"
-          >
-            Log in
+        <div className="flex gap-6 items-center text-sm">
+          <a href="#docs" className="text-muted hover:text-foreground transition-colors">
+            DOCS
+          </a>
+          <a href="#pricing" className="text-muted hover:text-foreground transition-colors">
+            PRICING
+          </a>
+          <Link href="/login" className="text-muted hover:text-foreground transition-colors">
+            LOG IN
           </Link>
           <Link
             href="/signup"
-            className="text-sm bg-accent hover:bg-accent-light text-white px-4 py-2 rounded-lg transition-colors"
+            className="bg-foreground text-background px-4 py-2 rounded-lg hover:opacity-90 transition-opacity font-medium"
           >
-            Get started
+            GET STARTED
           </Link>
         </div>
       </nav>
 
       {/* Hero */}
-      <section className="max-w-6xl mx-auto px-6 pt-24 pb-16 text-center">
-        <h1 className="text-5xl sm:text-6xl font-bold tracking-tight leading-tight">
-          Give your agent
-          <br />
-          <span className="text-accent-light">a phone number</span>
-        </h1>
-        <p className="mt-6 text-lg text-muted max-w-2xl mx-auto">
-          One API call. Your AI agent gets a real phone number with
-          speech-to-text and text-to-speech built in. You bring the brain, we
-          handle the voice.
-        </p>
-        <div className="flex gap-4 justify-center mt-10">
-          <Link
-            href="/signup"
-            className="bg-accent hover:bg-accent-light text-white text-lg font-medium px-8 py-3 rounded-xl transition-colors"
-          >
-            Get started
-          </Link>
-          <a
-            href="#how-it-works"
-            className="border border-border hover:border-zinc-500 text-foreground text-lg font-medium px-8 py-3 rounded-xl transition-colors"
-          >
-            How it works
-          </a>
-        </div>
-      </section>
-
-      {/* Code example */}
-      <section className="max-w-2xl mx-auto px-6 pb-20">
-        <div className="rounded-2xl border border-border bg-zinc-900/50 p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-3 h-3 rounded-full bg-red-500/60" />
-            <div className="w-3 h-3 rounded-full bg-yellow-500/60" />
-            <div className="w-3 h-3 rounded-full bg-green-500/60" />
-            <span className="text-xs text-muted ml-2">provision a number</span>
-          </div>
-          <pre className="text-sm text-green-400 overflow-x-auto">
-{`curl -X POST https://agentnumber.com/api/v0/numbers \\
-  -H "Authorization: Bearer an_live_..." \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "webhook_url": "https://your-agent.com/voice",
-    "area_code": "415"
-  }'`}
-          </pre>
-          <pre className="text-sm text-zinc-400 mt-4 overflow-x-auto">
-{`{
-  "id": "num_a1b2c3d4",
-  "phone_number": "+14155551234",
-  "webhook_url": "https://your-agent.com/voice",
-  "status": "active"
-}`}
-          </pre>
-        </div>
-      </section>
-
-      {/* How it works */}
-      <section id="how-it-works" className="max-w-4xl mx-auto px-6 py-16">
-        <h2 className="text-3xl font-bold text-center mb-4">How it works</h2>
-        <p className="text-muted text-center mb-12 max-w-xl mx-auto">
-          Your agent already has a brain. We give it a voice and a phone number.
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
-          {[
-            {
-              step: "1",
-              title: "Get a number",
-              desc: "Provision a real US phone number via API. Choose your area code.",
-            },
-            {
-              step: "2",
-              title: "Point to your agent",
-              desc: "Set your webhook URL. We send transcribed speech, your agent responds with text.",
-            },
-            {
-              step: "3",
-              title: "Calls just work",
-              desc: "Inbound and outbound. We handle STT and TTS. Your agent handles the conversation.",
-            },
-          ].map((item) => (
-            <div key={item.step} className="text-center">
-              <div className="w-10 h-10 rounded-full bg-accent/20 text-accent-light font-bold text-lg flex items-center justify-center mx-auto mb-4">
-                {item.step}
-              </div>
-              <h3 className="font-semibold text-lg mb-2">{item.title}</h3>
-              <p className="text-muted text-sm">{item.desc}</p>
+      <section className="max-w-6xl mx-auto px-6 pt-20 pb-16">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+          <div>
+            <h1 className="text-5xl sm:text-6xl font-bold tracking-tight leading-[1.1]">
+              Phone Numbers
+              <br />
+              for AI Agents
+            </h1>
+            <p className="mt-6 text-lg text-muted max-w-lg">
+              AgentNumber is the phone API for AI agents. It gives agents real
+              phone numbers with built-in speech-to-text and text-to-speech,
+              like Twilio does for humans.
+            </p>
+            <div className="flex gap-4 mt-8">
+              <Link
+                href="/signup"
+                className="bg-foreground text-background text-base font-medium px-6 py-3 rounded-xl hover:opacity-90 transition-opacity"
+              >
+                GET STARTED
+              </Link>
+              <a
+                href="#docs"
+                className="border border-border text-foreground text-base font-medium px-6 py-3 rounded-xl hover:border-zinc-500 transition-colors"
+              >
+                DOCS
+              </a>
             </div>
-          ))}
+          </div>
+
+          {/* Code example - right side */}
+          <div className="rounded-2xl border border-border bg-zinc-900/80 overflow-hidden">
+            <div className="flex border-b border-border">
+              <span className="text-xs font-medium px-4 py-2.5 border-b-2 border-accent text-foreground">cURL</span>
+              <span className="text-xs font-medium px-4 py-2.5 text-muted">Python</span>
+              <span className="text-xs font-medium px-4 py-2.5 text-muted">TypeScript</span>
+            </div>
+            <div className="p-5">
+              <pre className="text-sm leading-relaxed overflow-x-auto">
+<span className="text-blue-400">curl</span>{" -X POST "}<span className="text-green-400">https://agentnumber.com/api/v0/numbers</span>{` \\
+  `}<span className="text-zinc-500">-H</span>{` "Authorization: Bearer an_live_..." \\
+  `}<span className="text-zinc-500">-H</span>{` "Content-Type: application/json" \\
+  `}<span className="text-zinc-500">-d</span>{` '`}<span className="text-yellow-300">{`{
+    "webhook_url": "https://your-agent.com/voice"
+  }`}</span>{`'`}
+              </pre>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* Architecture */}
-      <section className="max-w-3xl mx-auto px-6 py-16">
+      {/* Architecture diagram */}
+      <section className="max-w-4xl mx-auto px-6 py-12">
         <div className="rounded-2xl border border-border bg-zinc-900/50 p-8">
-          <h2 className="text-2xl font-bold text-center mb-8">The voice pipeline</h2>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-sm">
-            <div className="bg-zinc-800 border border-border rounded-xl px-5 py-3 text-center">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 text-sm">
+            <div className="bg-zinc-800 border border-border rounded-xl px-6 py-4 text-center min-w-28">
               <div className="text-muted text-xs mb-1">Caller</div>
               <div className="font-semibold">Phone</div>
             </div>
-            <span className="text-muted hidden sm:block">&rarr;</span>
-            <span className="text-muted sm:hidden">&darr;</span>
-            <div className="bg-zinc-800 border border-border rounded-xl px-5 py-3 text-center">
-              <div className="text-muted text-xs mb-1">AgentNumber</div>
+            <div className="text-muted text-xs hidden sm:block">&mdash;&mdash;&rarr;</div>
+            <div className="text-muted sm:hidden">&darr;</div>
+            <div className="bg-zinc-800 border border-accent/30 rounded-xl px-6 py-4 text-center min-w-28">
+              <div className="text-accent text-xs mb-1">AgentNumber</div>
               <div className="font-semibold">STT + TTS</div>
             </div>
-            <span className="text-muted hidden sm:block">&rarr;</span>
-            <span className="text-muted sm:hidden">&darr;</span>
-            <div className="bg-accent/20 border border-accent/40 rounded-xl px-5 py-3 text-center">
-              <div className="text-accent-light text-xs mb-1">Your server</div>
+            <div className="text-muted text-xs hidden sm:block">&mdash;&mdash;&rarr;</div>
+            <div className="text-muted sm:hidden">&darr;</div>
+            <div className="bg-accent/10 border border-accent/40 rounded-xl px-6 py-4 text-center min-w-28">
+              <div className="text-accent text-xs mb-1">Your webhook</div>
               <div className="font-semibold">Your Agent</div>
             </div>
           </div>
-          <p className="text-muted text-xs text-center mt-6">
-            Caller speaks &rarr; we transcribe &rarr; your agent thinks &rarr; we speak the response
+          <p className="text-muted text-xs text-center mt-5">
+            Caller speaks &rarr; AgentNumber transcribes (STT) &rarr; POSTs text to your webhook &rarr; your agent responds &rarr; AgentNumber speaks it (TTS)
           </p>
         </div>
       </section>
 
-      {/* Features */}
-      <section className="max-w-4xl mx-auto px-6 py-16">
-        <h2 className="text-3xl font-bold text-center mb-12">Built for agents</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          {[
-            {
-              title: "Framework agnostic",
-              desc: "OpenAI, Anthropic, LangChain, custom — if it responds to HTTP, it works.",
-            },
-            {
-              title: "Real phone numbers",
-              desc: "US numbers with any area code. Inbound and outbound calling.",
-            },
-            {
-              title: "Pay with USDC",
-              desc: "x402 protocol. Your agent pays on-chain, no credit cards needed.",
-            },
-            {
-              title: "Webhooks",
-              desc: "Get notified on call events, transcripts, and recordings via HMAC-signed webhooks.",
-            },
-            {
-              title: "Call history API",
-              desc: "Full transcripts, recordings, duration, and cost tracking per call.",
-            },
-            {
-              title: "Sub-second latency",
-              desc: "Streaming STT/TTS pipeline for real-time, natural conversations.",
-            },
-          ].map((f) => (
-            <div
-              key={f.title}
-              className="rounded-xl border border-border bg-zinc-900/50 p-5"
-            >
-              <h3 className="font-semibold mb-1">{f.title}</h3>
-              <p className="text-sm text-muted">{f.desc}</p>
+      {/* ============================================================ */}
+      {/* DOCS — this is the section agents will read */}
+      {/* ============================================================ */}
+      <section id="docs" className="max-w-4xl mx-auto px-6 py-16">
+        <h2 className="text-3xl font-bold mb-2">API Documentation</h2>
+        <p className="text-muted mb-10">Base URL: <code className="text-accent text-sm">https://agentnumber.com/api/v0</code></p>
+
+        {/* Auth */}
+        <DocSection title="Authentication">
+          <p className="text-sm text-muted mb-3">
+            All API requests require a Bearer token. Get your API key from the dashboard after signing up.
+          </p>
+          <CodeBlock>{`Authorization: Bearer an_live_<your_key>`}</CodeBlock>
+        </DocSection>
+
+        {/* Quick Start */}
+        <DocSection title="Quick Start">
+          <p className="text-sm text-muted mb-4">
+            Three steps to give your agent a phone number:
+          </p>
+          <ol className="space-y-6 text-sm">
+            <li>
+              <StepLabel n={1} text="Sign up and create an API key" />
+              <p className="text-muted mt-1 ml-8">
+                Sign up at <code className="text-accent">/signup</code>, then create an API key in the dashboard.
+              </p>
+            </li>
+            <li>
+              <StepLabel n={2} text="Add credits" />
+              <CodeBlock title="POST /credits/purchase">{`{
+  "amount_cents": 1000
+}`}</CodeBlock>
+              <p className="text-muted mt-2 ml-8">$5 per number, $0.05/min outbound, $0.03/min inbound.</p>
+            </li>
+            <li>
+              <StepLabel n={3} text="Provision a phone number" />
+              <CodeBlock title="POST /numbers">{`{
+  "webhook_url": "https://your-agent.com/voice",
+  "area_code": "415",
+  "voice_id": "cgSgspJ2msm6clMCkdW9",
+  "first_message": "Hello, how can I help you?"
+}`}</CodeBlock>
+              <p className="text-muted mt-2 ml-8">
+                Your agent now has a real phone number. When someone calls, we transcribe speech and POST to your webhook in OpenAI chat completions format. Your agent responds with text, we speak it back.
+              </p>
+            </li>
+          </ol>
+        </DocSection>
+
+        {/* Webhook format */}
+        <DocSection title="Webhook Format">
+          <p className="text-sm text-muted mb-3">
+            Your <code className="text-accent">webhook_url</code> receives POST requests in OpenAI-compatible chat completions format:
+          </p>
+          <CodeBlock title="POST to your webhook_url">{`{
+  "model": "custom",
+  "messages": [
+    { "role": "system", "content": "You are a helpful assistant." },
+    { "role": "user", "content": "Hi, I'd like to schedule an appointment." }
+  ],
+  "stream": true
+}`}</CodeBlock>
+          <p className="text-sm text-muted mt-3">
+            Respond with SSE-streamed chat completion chunks (same format as OpenAI). The text content is spoken back to the caller via TTS.
+          </p>
+          <CodeBlock title="Your response (SSE stream)">{`data: {"choices":[{"delta":{"content":"Sure, I can"}}]}
+
+data: {"choices":[{"delta":{"content":" help with that."}}]}
+
+data: [DONE]`}</CodeBlock>
+        </DocSection>
+
+        {/* Numbers API */}
+        <DocSection title="Numbers API">
+          <EndpointBlock method="POST" path="/numbers" desc="Provision a new phone number">
+            <CodeBlock title="Request body">{`{
+  "webhook_url": "https://your-agent.com/voice",  // required
+  "area_code": "415",                              // optional, default "941"
+  "voice_id": "cgSgspJ2msm6clMCkdW9",             // optional, ElevenLabs voice
+  "first_message": "Hello!",                       // optional, spoken on pickup
+  "inbound_mode": "autopilot",                     // optional
+  "metadata": {}                                   // optional, your custom data
+}`}</CodeBlock>
+            <CodeBlock title="Response 201">{`{
+  "success": true,
+  "data": {
+    "id": "num_a1b2c3d4e5f6",
+    "phone_number": "+14155551234",
+    "webhook_url": "https://your-agent.com/voice",
+    "voice_id": "cgSgspJ2msm6clMCkdW9",
+    "first_message": "Hello!",
+    "inbound_mode": "autopilot",
+    "metadata": {},
+    "status": "active",
+    "created_at": "2026-03-05T12:00:00Z"
+  }
+}`}</CodeBlock>
+          </EndpointBlock>
+
+          <EndpointBlock method="GET" path="/numbers" desc="List all your phone numbers" />
+
+          <EndpointBlock method="GET" path="/numbers/:id" desc="Get a specific number" />
+
+          <EndpointBlock method="PATCH" path="/numbers/:id" desc="Update number config (webhook_url, voice_id, first_message, metadata)">
+            <CodeBlock title="Request body">{`{
+  "webhook_url": "https://new-agent.com/voice"
+}`}</CodeBlock>
+          </EndpointBlock>
+
+          <EndpointBlock method="DELETE" path="/numbers/:id" desc="Release a phone number" />
+        </DocSection>
+
+        {/* Calls API */}
+        <DocSection title="Calls API">
+          <EndpointBlock method="POST" path="/calls" desc="Make an outbound call">
+            <CodeBlock title="Request body">{`{
+  "from": "num_a1b2c3d4e5f6",     // your number ID
+  "to": "+15551234567",            // destination E.164
+  "metadata": {}                   // optional
+}`}</CodeBlock>
+          </EndpointBlock>
+
+          <EndpointBlock method="GET" path="/calls" desc="List call history (supports ?limit=&offset= pagination)" />
+
+          <EndpointBlock method="GET" path="/calls/:id" desc="Get call details (status, duration, cost)" />
+
+          <EndpointBlock method="GET" path="/calls/:id/transcript" desc="Get call transcript" />
+
+          <EndpointBlock method="GET" path="/calls/:id/recording" desc="Get recording URL" />
+        </DocSection>
+
+        {/* Credits API */}
+        <DocSection title="Credits API">
+          <EndpointBlock method="GET" path="/credits/balance" desc="Check your credit balance">
+            <CodeBlock title="Response">{`{
+  "success": true,
+  "data": {
+    "balance_cents": 1500,
+    "balance_dollars": "15.00"
+  }
+}`}</CodeBlock>
+          </EndpointBlock>
+
+          <EndpointBlock method="POST" path="/credits/purchase" desc="Purchase credits (x402 USDC payment — $10.00 per pack)" />
+        </DocSection>
+
+        {/* Webhooks API */}
+        <DocSection title="Webhooks API">
+          <p className="text-sm text-muted mb-3">
+            Register webhooks to receive events. Payloads are HMAC-signed with your secret.
+          </p>
+          <EndpointBlock method="POST" path="/webhooks" desc="Register a webhook">
+            <CodeBlock title="Request body">{`{
+  "url": "https://your-server.com/hooks",
+  "events": ["call.ended", "call.transcript.ready", "call.recording.ready"]
+}`}</CodeBlock>
+            <CodeBlock title="Response (secret shown once)">{`{
+  "success": true,
+  "data": {
+    "id": "wh_abc123",
+    "url": "https://your-server.com/hooks",
+    "events": ["call.ended", "call.transcript.ready", "call.recording.ready"],
+    "secret": "whsec_...",
+    "active": true
+  }
+}`}</CodeBlock>
+          </EndpointBlock>
+
+          <EndpointBlock method="GET" path="/webhooks" desc="List webhooks" />
+          <EndpointBlock method="PATCH" path="/webhooks/:id" desc="Update webhook (url, events, active)" />
+          <EndpointBlock method="DELETE" path="/webhooks/:id" desc="Delete a webhook" />
+
+          <div className="mt-4">
+            <p className="text-xs text-muted mb-2">Available events:</p>
+            <div className="flex flex-wrap gap-2">
+              {["call.started", "call.ended", "call.transcript.ready", "call.recording.ready"].map(e => (
+                <code key={e} className="text-xs bg-zinc-800 text-accent px-2 py-1 rounded">{e}</code>
+              ))}
             </div>
-          ))}
-        </div>
+          </div>
+        </DocSection>
+
+        {/* Error format */}
+        <DocSection title="Error Format">
+          <CodeBlock title="Error response">{`{
+  "success": false,
+  "error": {
+    "message": "Insufficient credits. Need 500 cents, have 0 cents.",
+    "code": "insufficient_credits"
+  }
+}`}</CodeBlock>
+          <div className="mt-3 space-y-1 text-xs text-muted">
+            <p><code className="text-foreground">401</code> — Invalid or missing API key</p>
+            <p><code className="text-foreground">400</code> — Validation error</p>
+            <p><code className="text-foreground">402</code> — Insufficient credits</p>
+            <p><code className="text-foreground">404</code> — Resource not found</p>
+            <p><code className="text-foreground">500</code> — Internal error</p>
+          </div>
+        </DocSection>
       </section>
 
       {/* Pricing */}
-      <section className="max-w-xl mx-auto px-6 py-16 text-center">
+      <section id="pricing" className="max-w-xl mx-auto px-6 py-16 text-center">
         <h2 className="text-3xl font-bold mb-4">Simple pricing</h2>
         <p className="text-muted mb-8">No subscriptions. Pay as you go.</p>
-        <div className="rounded-2xl border border-border bg-zinc-900/50 p-8">
+        <div className="rounded-2xl border border-border bg-zinc-900/50 p-8 text-left">
           <div className="space-y-3 text-sm">
             <div className="flex justify-between">
               <span className="text-muted">Phone number</span>
@@ -203,8 +324,8 @@ export default function Home() {
             </div>
           </div>
           <div className="border-t border-border mt-6 pt-6">
-            <p className="text-xs text-muted">
-              Credits purchased via USDC (x402). Minimum purchase $10.
+            <p className="text-xs text-muted text-center">
+              Credits purchased via USDC (x402 protocol) or dashboard. Minimum $10.
             </p>
           </div>
         </div>
@@ -218,7 +339,7 @@ export default function Home() {
         </p>
         <Link
           href="/signup"
-          className="inline-block bg-accent hover:bg-accent-light text-white text-lg font-medium px-8 py-3 rounded-xl transition-colors"
+          className="inline-block bg-foreground text-background text-lg font-medium px-8 py-3 rounded-xl hover:opacity-90 transition-opacity"
         >
           Get started
         </Link>
@@ -228,6 +349,73 @@ export default function Home() {
       <footer className="border-t border-border py-8 text-center text-sm text-muted">
         AgentNumber &copy; {new Date().getFullYear()}
       </footer>
+    </div>
+  );
+}
+
+/* ============================================================
+   Docs helper components
+   ============================================================ */
+
+function DocSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="mb-12 border-b border-border pb-10 last:border-0">
+      <h3 className="text-xl font-bold mb-4">{title}</h3>
+      {children}
+    </div>
+  );
+}
+
+function CodeBlock({ title, children }: { title?: string; children: string }) {
+  return (
+    <div className="rounded-xl bg-zinc-900/80 border border-border overflow-hidden my-3">
+      {title && (
+        <div className="px-4 py-2 border-b border-border text-xs text-muted">{title}</div>
+      )}
+      <pre className="p-4 text-sm text-green-400 overflow-x-auto whitespace-pre">{children}</pre>
+    </div>
+  );
+}
+
+function EndpointBlock({
+  method,
+  path,
+  desc,
+  children,
+}: {
+  method: string;
+  path: string;
+  desc: string;
+  children?: React.ReactNode;
+}) {
+  const methodColor: Record<string, string> = {
+    GET: "bg-blue-500/20 text-blue-400",
+    POST: "bg-green-500/20 text-green-400",
+    PATCH: "bg-yellow-500/20 text-yellow-400",
+    DELETE: "bg-red-500/20 text-red-400",
+  };
+
+  return (
+    <div className="my-4">
+      <div className="flex items-center gap-3 mb-1">
+        <span className={`text-xs font-bold px-2 py-0.5 rounded ${methodColor[method] || "bg-zinc-500/20 text-zinc-400"}`}>
+          {method}
+        </span>
+        <code className="text-sm font-mono text-foreground">{path}</code>
+      </div>
+      <p className="text-sm text-muted ml-14 mb-2">{desc}</p>
+      {children && <div className="ml-14">{children}</div>}
+    </div>
+  );
+}
+
+function StepLabel({ n, text }: { n: number; text: string }) {
+  return (
+    <div className="flex items-center gap-3">
+      <div className="w-6 h-6 rounded-full bg-accent/20 text-accent text-xs font-bold flex items-center justify-center shrink-0">
+        {n}
+      </div>
+      <span className="font-medium">{text}</span>
     </div>
   );
 }
