@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { vapi } from "@/lib/vapi";
 
-const DEV_MOCK = process.env.NODE_ENV === "development";
+const DEV_MOCK = process.env.ENABLE_DEV_MOCK === "true";
 
 export async function POST(request: NextRequest) {
   const { name, systemPrompt, firstMessage, voiceId, areaCode } = await request.json();

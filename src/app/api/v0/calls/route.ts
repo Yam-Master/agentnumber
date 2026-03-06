@@ -5,11 +5,16 @@ import { toPublicId, fromPublicId } from "@/lib/api/ids";
 import { createServiceClient } from "@/lib/supabase/server";
 import { checkBalance } from "@/lib/credits/operations";
 import { vapi } from "@/lib/vapi";
+import { rateLimit } from "@/lib/rate-limit";
 import type { ApiContext } from "@/lib/auth/types";
 
 const MIN_CALL_CREDITS = 100; // $1.00 minimum balance for calls
 
 export const POST = withApiAuth(async (request: NextRequest, ctx: ApiContext) => {
+  if (!rateLimit(`calls:${ctx.orgId}`, 100, 3600000)) {
+    return apiError("Rate limit exceeded. Max 100 calls per hour.", "rate_limit", 429);
+  }
+
   const body = await request.json();
   const { from, to, system_prompt, voice_id, max_duration, record, metadata = {} } = body;
 
@@ -73,6 +78,10 @@ export const POST = withApiAuth(async (request: NextRequest, ctx: ApiContext) =>
   });
 
   const vapiCallId = "id" in vapiCall ? vapiCall.id : undefined;
+
+  if (!vapiCallId) {
+    return apiError("Failed to initiate call with Vapi", "provider_error", 502);
+  }
 
   // Insert call record
   const { data: call, error } = await supabase

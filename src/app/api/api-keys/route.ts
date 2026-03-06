@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { generateApiKey } from "@/lib/auth/api-key";
 
-const DEV_MOCK = process.env.NODE_ENV === "development";
+const DEV_MOCK = process.env.ENABLE_DEV_MOCK === "true";
 
 async function getOrgId(): Promise<string | null> {
   const supabase = await createClient();

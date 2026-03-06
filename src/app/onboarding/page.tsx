@@ -44,6 +44,7 @@ export default function OnboardingPage() {
       const json = await res.json();
       if (json.key) {
         setApiKey(json.key);
+        localStorage.setItem("an_onboarding_key", json.key);
         setStep(1);
       } else {
         setError("Failed to create API key");
@@ -58,33 +59,33 @@ export default function OnboardingPage() {
     setProvisioning(true);
     setError("");
     try {
-      const res = await fetch("/api/api-keys").then(r => r.json());
-      const keys = res.data || [];
-      if (keys.length === 0) {
+      const key = apiKey || localStorage.getItem("an_onboarding_key");
+      if (!key) {
         setError("No API key found. Go back and create one.");
         setProvisioning(false);
         return;
       }
-      // Find the raw key — use the most recent active key prefix to find it
-      // We call the v0 endpoint via internal fetch with cookie auth
-      const provRes = await fetch("/api/agents", {
+
+      const provRes = await fetch("/api/v0/numbers", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${key}`,
+        },
         body: JSON.stringify({
-          name: "My Agent",
-          systemPrompt: systemPrompt || "You are a helpful AI assistant.",
-          firstMessage: "Hello! How can I help you?",
-          voiceId: "cgSgspJ2msm6clMCkdW9",
-          areaCode,
+          area_code: areaCode,
+          system_prompt: systemPrompt || "You are a helpful AI assistant.",
+          first_message: "Hello! How can I help you?",
+          voice_id: "cgSgspJ2msm6clMCkdW9",
         }),
       });
       const data = await provRes.json();
       if (!provRes.ok) {
-        setError(data.error || "Failed to provision number");
+        setError(data.error?.message || data.error || "Failed to provision number");
         setProvisioning(false);
         return;
       }
-      setPhoneNumber(data.phoneNumber || data.phone_number || "+1 (941) 555-0173");
+      setPhoneNumber(data.data?.phone_number || "+1 (941) 555-0173");
       setStep(3);
       setShowSuccess(true);
     } catch {
@@ -235,9 +236,9 @@ function StepCreateKey({
   );
 }
 
-function StepAddCredits({ apiKey, onNext }: { apiKey: string; onNext: () => void }) {
+function StepAddCredits({ onNext }: { apiKey: string; onNext: () => void }) {
   const [copied, setCopied] = useState(false);
-  const payAddress = process.env.NEXT_PUBLIC_PAY_TO_ADDRESS || "0x742d35Cc6634C0532925a3b844Bc9e7595f2bD68";
+  const payAddress = process.env.NEXT_PUBLIC_PAY_TO_ADDRESS || "0x0000000000000000000000000000000000000000";
 
   return (
     <div className="w-full max-w-lg">
@@ -247,10 +248,9 @@ function StepAddCredits({ apiKey, onNext }: { apiKey: string; onNext: () => void
       </p>
 
       <div className="space-y-4">
-        {/* Manual USDC */}
         <div className="border-3 border-border p-6">
           <h3 className="text-xs font-bold uppercase tracking-widest text-accent mb-4">
-            Option A // Send USDC on Base
+            Send USDC on Base
           </h3>
           <p className="text-xs text-foreground mb-3 uppercase tracking-wider">
             Send USDC to this address on Base L2:
@@ -278,25 +278,6 @@ function StepAddCredits({ apiKey, onNext }: { apiKey: string; onNext: () => void
               <span className="font-bold">=1000 credits</span>
             </div>
           </div>
-        </div>
-
-        {/* x402 */}
-        <div className="border-3 border-border p-6">
-          <h3 className="text-xs font-bold uppercase tracking-widest text-accent mb-4">
-            Option B // x402 Protocol
-          </h3>
-          <p className="text-xs text-foreground uppercase tracking-wider">
-            Credits are automatically deducted via x402 when you make API calls.
-            No manual funding needed — your wallet pays per request.
-          </p>
-          {apiKey && (
-            <div className="mt-3 bg-black border-3 border-border px-4 py-3">
-              <code className="text-xs text-foreground">
-                curl -H &quot;Authorization: Bearer {apiKey.slice(0, 20)}...&quot; \<br />
-                &nbsp;&nbsp;POST /api/v0/numbers
-              </code>
-            </div>
-          )}
         </div>
 
         <button
@@ -385,6 +366,10 @@ function StepProvisionNumber({
 
 function StepSuccess({ phoneNumber, onDashboard }: { phoneNumber: string; onDashboard: () => void }) {
   const displayRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    localStorage.removeItem("an_onboarding_key");
+  }, []);
 
   useEffect(() => {
     const el = displayRef.current;

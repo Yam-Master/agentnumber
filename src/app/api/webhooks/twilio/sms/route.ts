@@ -3,12 +3,44 @@ import { createServiceClient } from "@/lib/supabase/server";
 import { debitCredits } from "@/lib/credits/operations";
 import { deliverWebhooks } from "@/lib/webhooks/deliver";
 import { toPublicId } from "@/lib/api/ids";
+import crypto from "crypto";
 
 const SMS_INBOUND_COST_CENTS = 1; // $0.01 per inbound SMS
+
+function validateTwilioSignature(request: NextRequest, params: URLSearchParams): boolean {
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+  if (!authToken) return true; // Skip validation if not configured (local dev)
+
+  const signature = request.headers.get("x-twilio-signature");
+  if (!signature) return false;
+
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://agentnumber.vercel.app";
+  const url = `${baseUrl}/api/webhooks/twilio/sms`;
+
+  // Twilio: sort POST params alphabetically, concatenate key+value
+  const sortedParams = Array.from(params.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([k, v]) => k + v)
+    .join("");
+
+  const expected = crypto
+    .createHmac("sha1", authToken)
+    .update(url + sortedParams)
+    .digest("base64");
+
+  return signature === expected;
+}
 
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
+
+    // Validate Twilio signature
+    const params = new URLSearchParams();
+    formData.forEach((value, key) => params.append(key, String(value)));
+    if (!validateTwilioSignature(request, params)) {
+      return new NextResponse("Forbidden", { status: 403 });
+    }
     const from = formData.get("From") as string;
     const to = formData.get("To") as string;
     const body = formData.get("Body") as string;

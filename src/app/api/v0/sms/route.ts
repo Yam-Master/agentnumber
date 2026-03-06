@@ -6,11 +6,16 @@ import { createServiceClient } from "@/lib/supabase/server";
 import { checkBalance, debitCredits } from "@/lib/credits/operations";
 import { sendSms } from "@/lib/twilio";
 import { deliverWebhooks } from "@/lib/webhooks/deliver";
+import { rateLimit } from "@/lib/rate-limit";
 import type { ApiContext } from "@/lib/auth/types";
 
 const SMS_COST_CENTS = 2; // $0.02 per outbound SMS
 
 export const POST = withApiAuth(async (request: NextRequest, ctx: ApiContext) => {
+  if (!rateLimit(`sms:${ctx.orgId}`, 500, 3600000)) {
+    return apiError("Rate limit exceeded. Max 500 SMS per hour.", "rate_limit", 429);
+  }
+
   const body = await request.json();
   const { from, to, body: messageBody, metadata = {} } = body;
 

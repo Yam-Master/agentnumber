@@ -6,11 +6,16 @@ import { createServiceClient } from "@/lib/supabase/server";
 import { checkBalance, debitCredits } from "@/lib/credits/operations";
 import { findAvailableNumber, buyNumber, updateNumberWebhooks, TWILIO_SID, TWILIO_TOKEN } from "@/lib/twilio";
 import { vapi } from "@/lib/vapi";
+import { rateLimit } from "@/lib/rate-limit";
 import type { ApiContext } from "@/lib/auth/types";
 
 const NUMBER_COST_CENTS = 500; // $5.00
 
 export const POST = withApiAuth(async (request: NextRequest, ctx: ApiContext) => {
+  if (!rateLimit(`numbers:${ctx.orgId}`, 10, 3600000)) {
+    return apiError("Rate limit exceeded. Max 10 numbers per hour.", "rate_limit", 429);
+  }
+
   const body = await request.json();
   const {
     area_code = "941",

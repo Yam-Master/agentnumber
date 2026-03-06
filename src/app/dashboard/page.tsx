@@ -2,7 +2,7 @@ import Link from "next/link";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { CallActivityChart } from "./call-activity-chart";
 
-const DEV_MOCK = process.env.NODE_ENV === "development";
+const DEV_MOCK = process.env.ENABLE_DEV_MOCK === "true";
 
 export default async function DashboardPage() {
   let activeNumbers = 0;

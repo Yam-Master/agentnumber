@@ -1,14 +1,33 @@
+import { redirect } from "next/navigation";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 
+const DEV_MOCK = process.env.ENABLE_DEV_MOCK === "true";
+
 export default async function NumbersPage() {
+  if (DEV_MOCK) {
+    return (
+      <div>
+        <div className="mb-6">
+          <p className="text-xs text-foreground uppercase tracking-widest mb-2">Dashboard // Numbers</p>
+          <h1 className="text-xl font-bold uppercase tracking-wider">Phone Numbers</h1>
+        </div>
+        <div className="border-3 border-border p-6">
+          <p className="text-xs text-foreground py-8 text-center uppercase tracking-widest">No numbers provisioned yet</p>
+        </div>
+      </div>
+    );
+  }
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
   const service = createServiceClient();
 
   const { data: member } = await service
     .from("org_members")
     .select("org_id")
-    .eq("user_id", user!.id)
+    .eq("user_id", user.id)
     .single();
 
   const { data: numbers } = member?.org_id

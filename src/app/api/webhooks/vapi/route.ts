@@ -9,6 +9,15 @@ const INBOUND_COST_PER_MIN = 3; // $0.03/min in cents
 
 export async function POST(request: NextRequest) {
   try {
+    // Validate Vapi webhook secret
+    const webhookSecret = process.env.VAPI_WEBHOOK_SECRET;
+    if (webhookSecret) {
+      const headerSecret = request.headers.get("x-vapi-secret");
+      if (headerSecret !== webhookSecret) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    }
+
     const body = await request.json();
     const { message } = body;
 

@@ -157,7 +157,7 @@ export default function Home() {
               <div className="pricing-card-header">Voice</div>
               <div className="pricing-card-price">
                 <div className="amount">$0.05</div>
-                <div className="unit">USDC / message</div>
+                <div className="unit">USDC / minute</div>
               </div>
               <div className="pricing-card-body">
                 <ul>
@@ -165,7 +165,7 @@ export default function Home() {
                   <li>AI voice via Vapi</li>
                   <li>Call recording</li>
                   <li>Transcription included</li>
-                  <li>Billed per second</li>
+                  <li>Billed per minute</li>
                 </ul>
               </div>
             </div>
@@ -200,7 +200,6 @@ export default function Home() {
           <span>AGENT[NUMBER] &copy; 2026</span>
           <div className="footer-links">
             <Link href="/docs">Docs</Link>
-            <a href="https://github.com/KobeFuckingBryant/agentnumber" target="_blank" rel="noopener noreferrer">GitHub</a>
             <a href="https://www.x402.org" target="_blank" rel="noopener noreferrer">x402</a>
           </div>
         </footer>

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 
-const DEV_MOCK = process.env.NODE_ENV === "development";
+const DEV_MOCK = process.env.ENABLE_DEV_MOCK === "true";
 
 export async function GET() {
   if (DEV_MOCK) {

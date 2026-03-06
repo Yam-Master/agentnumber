@@ -5,10 +5,14 @@ export const metadata: Metadata = {
   title: "AgentNumber — Give Your Agent a Phone Number",
   description:
     "Voice + SMS for AI agents. Pay with USDC, get a phone number in under 5 minutes.",
+  icons: {
+    icon: "/favicon.ico",
+  },
   openGraph: {
     title: "AgentNumber",
     description: "Give your agent a phone number. Voice + SMS. Pay with USDC.",
     type: "website",
+    url: "https://agentnumber.vercel.app",
   },
 };
 

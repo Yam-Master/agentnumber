@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { SidebarNav } from "./sidebar-nav";
 
-const DEV_MOCK = process.env.NODE_ENV === "development";
+const DEV_MOCK = process.env.ENABLE_DEV_MOCK === "true";
 
 export default async function DashboardLayout({
   children,
