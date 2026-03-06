@@ -3,13 +3,10 @@ import { withApiAuth } from "@/lib/auth/with-api-auth";
 import { apiSuccess, apiError, apiList } from "@/lib/api/response";
 import { toPublicId } from "@/lib/api/ids";
 import { createServiceClient } from "@/lib/supabase/server";
-import { checkBalance, debitCredits } from "@/lib/credits/operations";
 import { findAvailableNumber, buyNumber, updateNumberWebhooks, TWILIO_SID, TWILIO_TOKEN } from "@/lib/twilio";
 import { vapi } from "@/lib/vapi";
 import { rateLimit } from "@/lib/rate-limit";
 import type { ApiContext } from "@/lib/auth/types";
-
-const NUMBER_COST_CENTS = 500; // $5.00
 
 export const POST = withApiAuth(async (request: NextRequest, ctx: ApiContext) => {
   if (!rateLimit(`numbers:${ctx.orgId}`, 10, 3600000)) {
@@ -33,16 +30,6 @@ export const POST = withApiAuth(async (request: NextRequest, ctx: ApiContext) =>
       "Provide webhook_url (your agent's endpoint) or system_prompt (managed by AgentNumber).",
       "validation_error",
       400
-    );
-  }
-
-  // Check credits
-  const balance = await checkBalance(ctx.orgId);
-  if (balance < NUMBER_COST_CENTS) {
-    return apiError(
-      `Insufficient credits. Need ${NUMBER_COST_CENTS} cents, have ${balance} cents.`,
-      "insufficient_credits",
-      402
     );
   }
 
@@ -149,9 +136,6 @@ export const POST = withApiAuth(async (request: NextRequest, ctx: ApiContext) =>
     // Non-fatal — SMS inbound won't work but number is still provisioned
     console.error("Failed to configure SMS webhook on Twilio number");
   }
-
-  // 8. Debit credits
-  await debitCredits(ctx.orgId, NUMBER_COST_CENTS, "Phone number provisioning", number!.id, "number");
 
   return apiSuccess(formatNumber(number!), 201);
 });
