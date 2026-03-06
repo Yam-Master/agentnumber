@@ -11,6 +11,8 @@ const VALID_EVENTS = [
   "call.ended",
   "call.transcript.ready",
   "call.recording.ready",
+  "sms.sent",
+  "sms.received",
 ];
 
 export const POST = withApiAuth(async (request: NextRequest, ctx: ApiContext) => {

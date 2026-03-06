@@ -4,43 +4,11 @@ import { apiSuccess, apiError, apiList } from "@/lib/api/response";
 import { toPublicId } from "@/lib/api/ids";
 import { createServiceClient } from "@/lib/supabase/server";
 import { checkBalance, debitCredits } from "@/lib/credits/operations";
+import { findAvailableNumber, buyNumber, updateNumberWebhooks, TWILIO_SID, TWILIO_TOKEN } from "@/lib/twilio";
 import { vapi } from "@/lib/vapi";
 import type { ApiContext } from "@/lib/auth/types";
 
 const NUMBER_COST_CENTS = 500; // $5.00
-const TWILIO_SID = process.env.TWILIO_ACCOUNT_SID!;
-const TWILIO_TOKEN = process.env.TWILIO_AUTH_TOKEN!;
-
-async function findAvailableNumber(areaCode: string): Promise<string> {
-  const url = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_SID}/AvailablePhoneNumbers/US/Local.json?Limit=1&AreaCode=${areaCode}`;
-  const res = await fetch(url, {
-    headers: {
-      Authorization: "Basic " + Buffer.from(`${TWILIO_SID}:${TWILIO_TOKEN}`).toString("base64"),
-    },
-  });
-  const data = await res.json();
-  if (!data.available_phone_numbers?.length) {
-    throw new Error(`No numbers available for area code ${areaCode}`);
-  }
-  return data.available_phone_numbers[0].phone_number;
-}
-
-async function buyTwilioNumber(phoneNumber: string): Promise<string> {
-  const url = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_SID}/IncomingPhoneNumbers.json`;
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {
-      Authorization: "Basic " + Buffer.from(`${TWILIO_SID}:${TWILIO_TOKEN}`).toString("base64"),
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: new URLSearchParams({ PhoneNumber: phoneNumber }),
-  });
-  const data = await res.json();
-  if (!res.ok) {
-    throw new Error(data.message || "Failed to purchase number from Twilio");
-  }
-  return data.phone_number;
-}
 
 export const POST = withApiAuth(async (request: NextRequest, ctx: ApiContext) => {
   const body = await request.json();
@@ -75,9 +43,12 @@ export const POST = withApiAuth(async (request: NextRequest, ctx: ApiContext) =>
 
   // 1. Find and buy a Twilio number
   let e164Number: string;
+  let twilioNumberSid: string;
   try {
     const available = await findAvailableNumber(area_code);
-    e164Number = await buyTwilioNumber(available);
+    const bought = await buyNumber(available);
+    e164Number = bought.phoneNumber;
+    twilioNumberSid = bought.sid;
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to provision phone number";
     return apiError(message, "provisioning_error", 500);
@@ -166,7 +137,15 @@ export const POST = withApiAuth(async (request: NextRequest, ctx: ApiContext) =>
     return apiError("Failed to update number", "internal_error", 500);
   }
 
-  // 7. Debit credits
+  // 7. Configure SMS webhook on the Twilio number
+  try {
+    await updateNumberWebhooks(twilioNumberSid, `${baseUrl}/api/webhooks/twilio/sms`);
+  } catch {
+    // Non-fatal — SMS inbound won't work but number is still provisioned
+    console.error("Failed to configure SMS webhook on Twilio number");
+  }
+
+  // 8. Debit credits
   await debitCredits(ctx.orgId, NUMBER_COST_CENTS, "Phone number provisioning", number!.id, "number");
 
   return apiSuccess(formatNumber(number!), 201);

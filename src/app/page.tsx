@@ -35,9 +35,9 @@ export default function Home() {
               for AI Agents
             </h1>
             <p className="mt-6 text-lg text-muted max-w-lg">
-              AgentNumber is the phone API for AI agents. It gives agents real
-              phone numbers with built-in speech-to-text and text-to-speech,
-              like Twilio does for humans.
+              AgentNumber is the phone API for AI agents. Give your agent a real
+              phone number with SMS and voice — send texts, receive messages,
+              and make calls. Like Twilio, but built for agents.
             </p>
             <div className="flex gap-4 mt-8">
               <Link
@@ -244,6 +244,36 @@ data: [DONE]`}</CodeBlock>
           <EndpointBlock method="GET" path="/calls/:id/recording" desc="Get recording URL" />
         </DocSection>
 
+        {/* SMS API */}
+        <DocSection title="SMS API">
+          <EndpointBlock method="POST" path="/sms" desc="Send an outbound SMS">
+            <CodeBlock title="Request body">{`{
+  "from": "num_a1b2c3d4e5f6",     // your number ID
+  "to": "+15551234567",            // destination E.164
+  "body": "Hello from my agent!",  // 1-1600 chars
+  "metadata": {}                   // optional
+}`}</CodeBlock>
+            <CodeBlock title="Response 201">{`{
+  "success": true,
+  "data": {
+    "id": "msg_a1b2c3d4e5f6",
+    "from": "+14155551234",
+    "to": "+15551234567",
+    "direction": "outbound",
+    "body": "Hello from my agent!",
+    "status": "sent",
+    "cost_cents": 2,
+    "metadata": {},
+    "created_at": "2026-03-05T12:00:00Z"
+  }
+}`}</CodeBlock>
+          </EndpointBlock>
+
+          <EndpointBlock method="GET" path="/sms" desc="List SMS messages (supports ?number_id=&direction=&limit=&offset=)" />
+
+          <EndpointBlock method="GET" path="/sms/:id" desc="Get a single SMS message" />
+        </DocSection>
+
         {/* Credits API */}
         <DocSection title="Credits API">
           <EndpointBlock method="GET" path="/credits/balance" desc="Check your credit balance">
@@ -288,7 +318,7 @@ data: [DONE]`}</CodeBlock>
           <div className="mt-4">
             <p className="text-xs text-muted mb-2">Available events:</p>
             <div className="flex flex-wrap gap-2">
-              {["call.started", "call.ended", "call.transcript.ready", "call.recording.ready"].map(e => (
+              {["call.started", "call.ended", "call.transcript.ready", "call.recording.ready", "sms.sent", "sms.received"].map(e => (
                 <code key={e} className="text-xs bg-zinc-800 text-accent px-2 py-1 rounded">{e}</code>
               ))}
             </div>
@@ -331,6 +361,14 @@ data: [DONE]`}</CodeBlock>
             <div className="flex justify-between">
               <span className="text-muted">Inbound calls</span>
               <span className="font-medium">$0.03 / min</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted">Outbound SMS</span>
+              <span className="font-medium">$0.02 / message</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted">Inbound SMS</span>
+              <span className="font-medium">$0.01 / message</span>
             </div>
           </div>
           <div className="border-t border-border mt-6 pt-6">
