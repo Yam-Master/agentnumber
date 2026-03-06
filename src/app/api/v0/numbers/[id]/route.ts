@@ -41,7 +41,7 @@ export const PATCH = withApiAuth(async (request: NextRequest, ctx: ApiContext & 
     return apiError("Number not found", "not_found", 404);
   }
 
-  const allowedFields = ["first_message", "voice_id", "inbound_mode", "webhook_url", "metadata"];
+  const allowedFields = ["system_prompt", "first_message", "voice_id", "inbound_mode", "webhook_url", "metadata"];
   const updates: Record<string, unknown> = {};
   for (const field of allowedFields) {
     if (field in body) {
@@ -120,6 +120,7 @@ function formatNumber(n: Record<string, unknown>) {
   return {
     id: toPublicId("num", n.id as string),
     phone_number: n.phone_number,
+    system_prompt: n.system_prompt,
     first_message: n.first_message,
     voice_id: n.voice_id,
     webhook_url: n.webhook_url,

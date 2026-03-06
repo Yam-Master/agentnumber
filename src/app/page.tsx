@@ -68,7 +68,7 @@ export default function Home() {
   `}<span className="text-zinc-500">-H</span>{` "Authorization: Bearer an_live_..." \\
   `}<span className="text-zinc-500">-H</span>{` "Content-Type: application/json" \\
   `}<span className="text-zinc-500">-d</span>{` '`}<span className="text-yellow-300">{`{
-    "webhook_url": "https://your-agent.com/voice"
+    "system_prompt": "You are a helpful assistant."
   }`}</span>{`'`}
               </pre>
             </div>
@@ -139,14 +139,23 @@ export default function Home() {
             </li>
             <li>
               <StepLabel n={3} text="Provision a phone number" />
-              <CodeBlock title="POST /numbers">{`{
+              <p className="text-muted mt-2 ml-8 mb-3">
+                <strong className="text-foreground">Option A: Managed mode</strong> — just provide a system prompt, no server needed:
+              </p>
+              <CodeBlock title="POST /numbers (managed)">{`{
+  "system_prompt": "You are a helpful sales assistant for Acme Corp.",
+  "first_message": "Hello, how can I help you?",
+  "area_code": "415"
+}`}</CodeBlock>
+              <p className="text-muted mt-4 ml-8 mb-3">
+                <strong className="text-foreground">Option B: Webhook mode</strong> — route calls to your own server for full control:
+              </p>
+              <CodeBlock title="POST /numbers (webhook)">{`{
   "webhook_url": "https://your-agent.com/voice",
-  "area_code": "415",
-  "voice_id": "cgSgspJ2msm6clMCkdW9",
-  "first_message": "Hello, how can I help you?"
+  "area_code": "415"
 }`}</CodeBlock>
               <p className="text-muted mt-2 ml-8">
-                Your agent now has a real phone number. When someone calls, we transcribe speech and POST to your webhook in OpenAI chat completions format. Your agent responds with text, we speak it back.
+                Managed mode: we handle the LLM — your agent gets a number in one API call. Webhook mode: calls are routed to your server in OpenAI chat completions format.
               </p>
             </li>
           </ol>
@@ -179,12 +188,13 @@ data: [DONE]`}</CodeBlock>
         <DocSection title="Numbers API">
           <EndpointBlock method="POST" path="/numbers" desc="Provision a new phone number">
             <CodeBlock title="Request body">{`{
-  "webhook_url": "https://your-agent.com/voice",  // required
-  "area_code": "415",                              // optional, default "941"
-  "voice_id": "cgSgspJ2msm6clMCkdW9",             // optional, ElevenLabs voice
-  "first_message": "Hello!",                       // optional, spoken on pickup
-  "inbound_mode": "autopilot",                     // optional
-  "metadata": {}                                   // optional, your custom data
+  "system_prompt": "You are a helpful assistant.",  // managed mode (OR webhook_url)
+  "webhook_url": "https://your-agent.com/voice",   // webhook mode (OR system_prompt)
+  "area_code": "415",                               // optional, default "941"
+  "voice_id": "cgSgspJ2msm6clMCkdW9",              // optional, ElevenLabs voice
+  "first_message": "Hello!",                        // optional, spoken on pickup
+  "inbound_mode": "autopilot",                      // optional
+  "metadata": {}                                    // optional, your custom data
 }`}</CodeBlock>
             <CodeBlock title="Response 201">{`{
   "success": true,

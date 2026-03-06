@@ -48,15 +48,16 @@ export const POST = withApiAuth(async (request: NextRequest, ctx: ApiContext) =>
     area_code = "941",
     voice_id = "cgSgspJ2msm6clMCkdW9",
     webhook_url,
+    system_prompt,
     first_message,
     inbound_mode = "autopilot",
     metadata = {},
   } = body;
 
-  // webhook_url is required — this is where your agent receives calls
-  if (!webhook_url) {
+  // Must provide either webhook_url (bring your own server) or system_prompt (managed)
+  if (!webhook_url && !system_prompt) {
     return apiError(
-      "webhook_url is required. This is the endpoint your agent exposes to handle voice conversations (OpenAI-compatible chat completions format).",
+      "Provide webhook_url (your agent's endpoint) or system_prompt (managed by AgentNumber).",
       "validation_error",
       400
     );
@@ -82,20 +83,56 @@ export const POST = withApiAuth(async (request: NextRequest, ctx: ApiContext) =>
     return apiError(message, "provisioning_error", 500);
   }
 
-  // 2. Create Vapi assistant in custom-LLM mode
-  // Vapi handles STT/TTS, agent's webhook handles the AI
+  const supabase = createServiceClient();
+
+  // We need the number's DB ID to build the managed voice URL, so insert first with a placeholder
+  // Then create the Vapi assistant with the correct URL
+
+  // 2. Insert number record (get the ID)
+  const { data: numberRecord, error: insertError } = await supabase
+    .from("numbers")
+    .insert({
+      org_id: ctx.orgId,
+      phone_number: e164Number,
+      system_prompt: system_prompt || null,
+      first_message: first_message || null,
+      voice_id,
+      inbound_mode,
+      webhook_url: webhook_url || null,
+      metadata,
+      vapi_assistant_id: "pending",
+      vapi_phone_number_id: "pending",
+      status: "active",
+    })
+    .select()
+    .single();
+
+  if (insertError) {
+    return apiError("Failed to create number record", "internal_error", 500);
+  }
+
+  // 3. Determine the LLM URL for Vapi
+  // webhook_url = agent's own server (custom LLM mode)
+  // system_prompt = AgentNumber's managed voice endpoint
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : "https://agentnumber.vercel.app";
+
+  const llmUrl = webhook_url || `${baseUrl}/api/v0/voice/${numberRecord.id}`;
+
+  // 4. Create Vapi assistant in custom-LLM mode
   const assistant = await vapi.assistants.create({
     name: `an-${ctx.orgId.slice(0, 8)}`,
     voice: { provider: "11labs", voiceId: voice_id },
     firstMessage: first_message || undefined,
     model: {
       provider: "custom-llm",
-      url: webhook_url,
+      url: llmUrl,
       model: "custom",
     },
   });
 
-  // 3. Import number into Vapi
+  // 5. Import number into Vapi
   let vapiPhone;
   try {
     vapiPhone = await vapi.phoneNumbers.create({
@@ -107,40 +144,32 @@ export const POST = withApiAuth(async (request: NextRequest, ctx: ApiContext) =>
     });
   } catch (err) {
     await vapi.assistants.delete({ id: assistant.id }).catch(() => {});
+    await supabase.from("numbers").delete().eq("id", numberRecord.id);
     const message = err instanceof Error ? err.message : "Failed to connect number to Vapi";
     return apiError(message, "provisioning_error", 500);
   }
 
-  const supabase = createServiceClient();
-
-  // 4. Insert number record
+  // 6. Update number record with Vapi IDs
   const { data: number, error } = await supabase
     .from("numbers")
-    .insert({
-      org_id: ctx.orgId,
-      phone_number: e164Number,
-      first_message: first_message || null,
-      voice_id,
-      inbound_mode,
-      webhook_url,
-      metadata,
+    .update({
       vapi_assistant_id: assistant.id,
       vapi_phone_number_id: vapiPhone.id,
-      status: "active",
     })
+    .eq("id", numberRecord.id)
     .select()
     .single();
 
   if (error) {
     await vapi.phoneNumbers.delete({ id: vapiPhone.id }).catch(() => {});
     await vapi.assistants.delete({ id: assistant.id }).catch(() => {});
-    return apiError("Failed to create number", "internal_error", 500);
+    return apiError("Failed to update number", "internal_error", 500);
   }
 
-  // 5. Debit credits
-  await debitCredits(ctx.orgId, NUMBER_COST_CENTS, "Phone number provisioning", number.id, "number");
+  // 7. Debit credits
+  await debitCredits(ctx.orgId, NUMBER_COST_CENTS, "Phone number provisioning", number!.id, "number");
 
-  return apiSuccess(formatNumber(number), 201);
+  return apiSuccess(formatNumber(number!), 201);
 });
 
 export const GET = withApiAuth(async (_request: NextRequest, ctx: ApiContext) => {
@@ -164,6 +193,7 @@ function formatNumber(n: Record<string, unknown>) {
   return {
     id: toPublicId("num", n.id as string),
     phone_number: n.phone_number,
+    system_prompt: n.system_prompt,
     first_message: n.first_message,
     voice_id: n.voice_id,
     webhook_url: n.webhook_url,
