@@ -1,0 +1,227 @@
+/* AgentNumber Brutalist Landing Page */
+.landing *,.landing *::before,.landing *::after{margin:0;padding:0;box-sizing:border-box}
+.landing{--red:#FF2200;--black:#0A0A0A;--bg:#F5F5F0;--gray:#888;--border:3px solid var(--black);--border-red:3px solid var(--red);font-family:'Courier New',Courier,monospace;background:var(--bg);color:var(--black);line-height:1.6;-webkit-font-smoothing:antialiased}
+
+/* NAV */
+.landing .nav{position:fixed;top:0;left:0;right:0;z-index:1000;background:var(--black);border-bottom:var(--border-red);display:flex;align-items:center;justify-content:space-between;padding:12px 32px;height:56px}
+.landing .nav-logo{color:#fff;font-size:18px;font-weight:700;letter-spacing:2px;text-decoration:none}
+.landing .nav-logo span{color:var(--red)}
+.landing .nav-links{display:flex;gap:24px;align-items:center}
+.landing .nav-links a{color:var(--gray);font-size:12px;text-decoration:none;text-transform:uppercase;letter-spacing:1px;transition:color .2s}
+.landing .nav-links a:hover{color:#fff}
+.landing .nav-cta{background:var(--red)!important;color:#fff!important;padding:6px 16px;font-family:inherit;font-weight:700;border:none;cursor:pointer;font-size:12px;text-transform:uppercase;letter-spacing:1px;transition:background .2s}
+.landing .nav-cta:hover{background:#cc1b00!important}
+
+/* DATELINE */
+.landing .dateline{margin-top:56px;border-bottom:var(--border);padding:10px 32px;display:flex;justify-content:space-between;font-size:11px;text-transform:uppercase;letter-spacing:3px;color:var(--gray)}
+.landing .dateline-left{display:flex;gap:24px}
+.landing .dateline .red{color:var(--red);font-weight:700}
+.landing .double-rule{border:none;border-top:3px double var(--black);margin:0}
+
+/* HERO */
+.landing .hero{padding:48px 32px 40px;display:grid;grid-template-columns:1fr 1fr;gap:48px;border-bottom:var(--border);position:relative;overflow:hidden}
+.landing .hero-left{display:flex;flex-direction:column;justify-content:center}
+.landing .hero-right{display:flex;align-items:center;justify-content:center;position:relative;min-height:620px}
+.landing .hero-headline{font-size:clamp(60px,10vw,160px);font-weight:900;line-height:.88;text-transform:uppercase;letter-spacing:-3px;margin-bottom:24px}
+.landing .hero-headline .red{color:var(--red)}
+.landing .hero-byline{font-size:11px;text-transform:uppercase;letter-spacing:2px;color:var(--gray);margin-bottom:20px;border-left:var(--border-red);padding-left:12px}
+.landing .hero-lede{font-size:16px;line-height:1.7;margin-bottom:28px;max-width:520px}
+.landing .hero-lede strong{color:var(--red)}
+.landing .hero-ctas{display:flex;gap:16px;margin-bottom:32px;flex-wrap:wrap}
+.landing .btn-primary{background:var(--red);color:#fff;padding:14px 32px;font-family:inherit;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:2px;border:none;cursor:pointer;transition:background .2s;text-decoration:none;display:inline-block}
+.landing .btn-primary:hover{background:#cc1b00}
+.landing .btn-secondary{background:transparent;color:var(--black);padding:14px 32px;font-family:inherit;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:2px;border:var(--border);cursor:pointer;transition:all .2s;text-decoration:none;display:inline-block}
+.landing .btn-secondary:hover{background:var(--black);color:#fff}
+.landing .hero-stats{border-top:var(--border);padding-top:20px}
+.landing .hero-stats table{width:100%;max-width:420px;border-collapse:collapse}
+.landing .hero-stats td{padding:6px 0;font-size:13px;text-transform:uppercase;letter-spacing:1px}
+.landing .hero-stats td:first-child{color:var(--gray);width:55%}
+.landing .hero-stats td:last-child{font-weight:700;text-align:right}
+.landing .hero-stats tr+tr td{border-top:1px solid #ddd}
+
+/* iPHONE */
+.landing .iphone{width:370px;height:750px;background:#000;border-radius:52px;position:relative;overflow:hidden;box-shadow:0 0 0 3px #1a1a1a,0 0 0 6px #333,0 30px 80px rgba(0,0,0,.35)}
+.landing .iphone-screen{position:absolute;top:0;left:0;right:0;bottom:0;background:#000;border-radius:52px;overflow:hidden;display:flex;flex-direction:column}
+.landing .dynamic-island{width:126px;height:36px;background:#000;border-radius:20px;position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:20;display:flex;align-items:center;justify-content:center}
+.landing .dynamic-island::before{content:'';width:10px;height:10px;background:#111;border-radius:50%;border:1.5px solid #222}
+.landing .iphone-status{display:flex;justify-content:space-between;align-items:center;padding:16px 28px 0;font-size:12px;font-weight:600;color:#fff;position:relative;z-index:10;height:54px}
+.landing .iphone-status .time{font-size:15px;font-weight:700;letter-spacing:.5px}
+.landing .status-icons{display:flex;align-items:center;gap:5px}
+.landing .status-icons svg{width:16px;height:16px;fill:#fff}
+.landing .battery{width:24px;height:11px;border:1.5px solid rgba(255,255,255,.5);border-radius:3px;position:relative;display:flex;align-items:center;padding:1.5px}
+.landing .battery::after{content:'';position:absolute;right:-4px;top:50%;transform:translateY(-50%);width:2px;height:5px;background:rgba(255,255,255,.5);border-radius:0 1px 1px 0}
+.landing .battery-fill{width:70%;height:100%;background:#34C759;border-radius:1.5px}
+.landing .app-area{flex:1;display:flex;flex-direction:column;padding:8px 0 0;overflow:hidden;position:relative}
+.landing .app-header{padding:8px 24px 12px;display:flex;justify-content:space-between;align-items:center}
+.landing .app-title{font-family:'Courier New',monospace;font-size:13px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:3px}
+.landing .app-badge{font-size:9px;background:var(--red);color:#fff;padding:2px 8px;font-family:'Courier New',monospace;letter-spacing:1px;text-transform:uppercase;font-weight:700;border-radius:3px}
+.landing .app-divider{height:1px;background:rgba(255,255,255,.08);margin:0 24px}
+.landing .number-display{padding:24px 24px 16px;text-align:center}
+.landing .number-display .label{font-size:10px;text-transform:uppercase;letter-spacing:3px;color:rgba(255,255,255,.35);margin-bottom:8px;font-family:'Courier New',monospace}
+.landing .number-display .number{font-size:32px;font-weight:900;color:#fff;letter-spacing:2px;font-family:'Courier New',monospace}
+.landing .number-display .sub{font-size:10px;color:var(--red);text-transform:uppercase;letter-spacing:2px;margin-top:6px;font-family:'Courier New',monospace}
+.landing .feed-area{flex:1;padding:0 20px;overflow:hidden;position:relative}
+.landing .feed-label{font-size:9px;text-transform:uppercase;letter-spacing:3px;color:var(--red);margin-bottom:12px;display:flex;align-items:center;gap:6px;font-family:'Courier New',monospace;padding:0 4px}
+.landing .feed-dot{width:5px;height:5px;background:var(--red);border-radius:50%;animation:landing-blink 1.5s step-end infinite}
+@keyframes landing-blink{0%,100%{opacity:1}50%{opacity:0}}
+.landing .msg{padding:10px 12px;margin-bottom:8px;font-size:12px;line-height:1.5;opacity:0;transform:translateY(24px);transition:all .45s cubic-bezier(.23,1,.32,1);border-radius:12px;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif}
+.landing .msg.visible{opacity:1;transform:translateY(0)}
+.landing .msg.outbound{background:var(--red);color:#fff;margin-left:40px;border-bottom-right-radius:4px}
+.landing .msg.inbound{background:#1C1C1E;color:rgba(255,255,255,.9);margin-right:40px;border-bottom-left-radius:4px}
+.landing .msg .msg-meta{font-size:9px;margin-top:4px;opacity:.5;font-family:'Courier New',monospace}
+.landing .call-overlay{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.97);display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;transition:opacity .4s;pointer-events:none;z-index:30;border-radius:52px}
+.landing .call-overlay.active{opacity:1}
+.landing .call-ring{width:90px;height:90px;border:2px solid var(--red);border-radius:50%;display:flex;align-items:center;justify-content:center;position:relative;margin-bottom:24px}
+.landing .call-ring::before,.landing .call-ring::after{content:'';position:absolute;border:1.5px solid var(--red);border-radius:50%;opacity:0}
+.landing .call-overlay.active .call-ring::before{animation:landing-ringExpand 1.5s ease-out infinite}
+.landing .call-overlay.active .call-ring::after{animation:landing-ringExpand 1.5s ease-out .5s infinite}
+@keyframes landing-ringExpand{0%{width:90px;height:90px;opacity:.6}100%{width:200px;height:200px;opacity:0}}
+.landing .call-icon{font-size:32px;color:var(--red);animation:landing-ringShake .5s ease-in-out infinite}
+@keyframes landing-ringShake{0%,100%{transform:rotate(0)}20%{transform:rotate(-15deg)}40%{transform:rotate(15deg)}60%{transform:rotate(-10deg)}80%{transform:rotate(10deg)}}
+.landing .call-label{font-size:11px;text-transform:uppercase;letter-spacing:4px;color:rgba(255,255,255,.4);margin-bottom:6px;font-family:'Courier New',monospace}
+.landing .call-number{font-size:24px;font-weight:700;color:#fff;letter-spacing:1px;font-family:-apple-system,BlinkMacSystemFont,sans-serif}
+.landing .call-status{font-size:11px;text-transform:uppercase;letter-spacing:3px;color:var(--red);margin-top:16px;animation:landing-blink 1s step-end infinite;font-family:'Courier New',monospace}
+.landing .call-actions{display:flex;gap:40px;margin-top:36px}
+.landing .call-btn{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;border:none;cursor:pointer}
+.landing .call-btn.decline{background:#FF3B30}
+.landing .call-btn.accept{background:#34C759}
+.landing .home-indicator{padding:8px 0 10px;display:flex;justify-content:center}
+.landing .home-bar{width:134px;height:5px;background:rgba(255,255,255,.2);border-radius:3px}
+
+/* DARK LOWER SECTION */
+.landing .dark-section{background:var(--black);color:#fff}
+
+/* MARQUEE */
+.landing .marquee-wrap{background:var(--red);overflow:hidden;padding:12px 0;border-bottom:3px solid rgba(255,255,255,.15)}
+.landing .marquee{display:flex;animation:landing-marquee 30s linear infinite;white-space:nowrap}
+.landing .marquee span{color:#fff;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:3px;padding:0 48px}
+@keyframes landing-marquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+/* FEATURES */
+.landing .features-strip{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:3px solid rgba(255,255,255,.15)}
+.landing .feat{padding:28px 24px;border-right:3px solid rgba(255,255,255,.15);text-align:center}
+.landing .feat:last-child{border-right:none}
+.landing .feat-icon{font-size:28px;margin-bottom:8px;color:var(--red)}
+.landing .feat-name{font-size:18px;font-weight:900;text-transform:uppercase;letter-spacing:2px;margin-bottom:4px;color:var(--red)}
+.landing .feat-desc{font-size:14px;color:#fff;font-weight:700;line-height:1.5}
+
+/* DEMO SECTION */
+.landing .demo-section{padding:64px 32px;border-bottom:3px solid rgba(255,255,255,.15);display:flex;justify-content:center;position:relative;overflow:visible}
+.landing .demo-wrap{position:relative;display:flex;justify-content:center;align-items:center}
+
+/* Pop-out callouts */
+.landing .pop{position:absolute;padding:12px 20px;font-family:'Courier New',monospace;font-size:18px;font-weight:900;color:#fff;text-transform:uppercase;letter-spacing:2px;line-height:1.4;opacity:0;transition:all .5s cubic-bezier(.23,1,.32,1);pointer-events:none;white-space:nowrap}
+.landing .pop.left{right:calc(100% + 40px);text-align:right;transform:translateX(-20px)}
+.landing .pop.right{left:calc(100% + 40px);text-align:left;transform:translateX(20px)}
+.landing .pop.visible{opacity:1;transform:translateX(0)}
+.landing .pop .pop-line{display:block;font-size:14px;color:#fff;text-transform:none;letter-spacing:0;font-weight:700;margin-top:6px}
+.landing .pop .pop-highlight{color:var(--red)}
+.landing .pop::after{content:'';position:absolute;top:50%;width:28px;height:2px;background:var(--red)}
+.landing .pop.left::after{left:100%;margin-left:8px;transform:translateY(-50%)}
+.landing .pop.right::after{right:100%;margin-right:8px;transform:translateY(-50%)}
+
+/* TELEGRAM iPHONE */
+.landing .tg-iphone{width:375px;height:812px;background:#000;border-radius:55px;position:relative;overflow:hidden;box-shadow:0 0 0 3px #1a1a1a,0 0 0 6px #333,0 30px 80px rgba(0,0,0,.35);flex-shrink:0}
+.landing .tg-screen{position:absolute;top:0;left:0;right:0;bottom:0;border-radius:55px;overflow:hidden;display:flex;flex-direction:column;background:#0E1621}
+.landing .tg-screen .dynamic-island{width:126px;height:36px;background:#000;border-radius:20px;position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:20}
+.landing .tg-screen .dynamic-island::before{content:'';width:10px;height:10px;background:#111;border-radius:50%;border:1.5px solid #222;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}
+.landing .tg-status{display:flex;justify-content:space-between;align-items:center;padding:16px 28px 0;font-size:12px;font-weight:600;color:#fff;height:54px;position:relative;z-index:10}
+.landing .tg-status .time{font-size:15px;font-weight:700}
+.landing .tg-nav{display:flex;align-items:center;gap:12px;padding:8px 16px 10px;border-bottom:1px solid rgba(255,255,255,.06)}
+.landing .tg-back{color:#5BA0D0;font-size:22px;line-height:1;font-weight:300}
+.landing .tg-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#FF6B4A,#FF2200);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;font-family:-apple-system,BlinkMacSystemFont,sans-serif}
+.landing .tg-contact{flex:1}
+.landing .tg-contact-name{font-size:15px;font-weight:600;color:#fff;font-family:-apple-system,BlinkMacSystemFont,sans-serif}
+.landing .tg-contact-status{font-size:11px;color:#5BA0D0;font-family:-apple-system,BlinkMacSystemFont,sans-serif}
+.landing .tg-chat{flex:1;padding:16px 12px;display:flex;flex-direction:column;justify-content:flex-start;gap:8px;overflow:hidden}
+.landing .tg-bubble{max-width:85%;padding:8px 12px;font-size:14px;line-height:1.45;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;border-radius:16px;position:relative;opacity:0;transform:translateY(16px);transition:all .4s cubic-bezier(.23,1,.32,1)}
+.landing .tg-bubble.visible{opacity:1;transform:translateY(0)}
+.landing .tg-bubble.user{background:#2B5278;color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+.landing .tg-bubble.bot{background:#182533;color:#fff;align-self:flex-start;border-bottom-left-radius:4px}
+.landing .tg-bubble .tg-time{font-size:10px;color:rgba(255,255,255,.35);text-align:right;margin-top:4px}
+.landing .tg-bubble .tg-key{font-family:'Courier New',monospace;font-size:12px;background:rgba(0,0,0,.3);padding:4px 8px;border-radius:6px;display:inline-block;margin-top:4px;word-break:break-all;color:#8BC6EC}
+.landing .tg-bubble .tg-number{color:var(--red);font-weight:700;font-size:16px}
+.landing .tg-typing{align-self:flex-start;padding:10px 14px;background:#182533;border-radius:16px;border-bottom-left-radius:4px;display:flex;gap:4px;opacity:0;transition:opacity .3s}
+.landing .tg-typing.visible{opacity:1}
+.landing .tg-typing span{width:6px;height:6px;background:rgba(255,255,255,.3);border-radius:50%;animation:landing-typingBounce 1.2s ease-in-out infinite}
+.landing .tg-typing span:nth-child(2){animation-delay:.2s}
+.landing .tg-typing span:nth-child(3){animation-delay:.4s}
+@keyframes landing-typingBounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-4px)}}
+.landing .tg-input{padding:8px 12px 28px;display:flex;align-items:center;gap:10px;border-top:1px solid rgba(255,255,255,.06)}
+.landing .tg-input-field{flex:1;background:rgba(255,255,255,.06);border:none;border-radius:20px;padding:8px 16px;font-size:14px;color:rgba(255,255,255,.3);font-family:-apple-system,BlinkMacSystemFont,sans-serif}
+.landing .tg-input-send{width:32px;height:32px;background:#5BA0D0;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px}
+
+/* Call notification banner */
+.landing .tg-call-banner{position:absolute;top:54px;left:8px;right:8px;background:rgba(40,40,40,.97);backdrop-filter:blur(20px);border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:12px;z-index:30;opacity:0;transform:translateY(-100%);transition:all .4s cubic-bezier(.23,1,.32,1)}
+.landing .tg-call-banner.visible{opacity:1;transform:translateY(0)}
+.landing .tg-call-banner-icon{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,#FF6B4A,#FF2200);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.landing .tg-call-banner-info{flex:1}
+.landing .tg-call-banner-name{font-size:14px;font-weight:600;color:#fff;font-family:-apple-system,BlinkMacSystemFont,sans-serif}
+.landing .tg-call-banner-sub{font-size:12px;color:rgba(255,255,255,.5);font-family:-apple-system,BlinkMacSystemFont,sans-serif}
+.landing .tg-call-banner-actions{display:flex;gap:10px}
+.landing .tg-call-btn{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px}
+.landing .tg-call-btn.decline{background:#FF3B30}
+.landing .tg-call-btn.accept{background:#34C759}
+
+/* PRICING */
+.landing .pricing{padding:48px 32px;border-bottom:3px solid rgba(255,255,255,.15)}
+.landing .pricing-head{margin-bottom:28px}
+.landing .pricing-head h2{font-size:clamp(24px,3vw,36px);font-weight:900;text-transform:uppercase;letter-spacing:-1px;margin-bottom:4px;color:#fff}
+.landing .pricing-head p{font-size:14px;color:#fff;font-weight:700}
+.landing .pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0}
+.landing .pricing-card{border:3px solid rgba(255,255,255,.15);border-right:none;padding:0}
+.landing .pricing-card:last-child{border-right:3px solid rgba(255,255,255,.15)}
+.landing .pricing-card-header{padding:16px 20px;border-bottom:3px solid rgba(255,255,255,.15);font-size:18px;text-transform:uppercase;letter-spacing:2px;font-weight:900;color:var(--red)}
+.landing .pricing-card-price{padding:24px 20px 20px;text-align:center}
+.landing .pricing-card-price .amount{font-size:42px;font-weight:900;color:var(--red);line-height:1}
+.landing .pricing-card-price .unit{font-size:14px;color:#fff;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-top:6px}
+.landing .pricing-card-body{padding:0 20px 20px}
+.landing .pricing-card-body ul{list-style:none;font-size:14px;line-height:2.2}
+.landing .pricing-card-body li{display:flex;align-items:center;gap:8px;color:#fff;font-weight:700}
+.landing .pricing-card-body li::before{content:'-';color:var(--red);font-weight:700}
+.landing .pricing-note{margin-top:20px;font-size:14px;color:#fff;font-weight:700;text-transform:uppercase;letter-spacing:1px;text-align:center}
+
+/* CTA */
+.landing .cta-section{padding:64px 32px;text-align:center;position:relative;overflow:hidden;border-bottom:var(--border-red)}
+.landing .cta-section h2{font-size:clamp(24px,3.5vw,48px);font-weight:900;text-transform:uppercase;letter-spacing:-1px;margin-bottom:12px;position:relative;color:#fff}
+.landing .cta-section p{font-size:16px;color:#fff;font-weight:700;margin-bottom:28px;position:relative}
+.landing .cta-section .btn-primary{position:relative;font-size:16px;padding:18px 48px}
+
+/* FOOTER */
+.landing .footer{padding:20px 32px;border-top:3px solid rgba(255,255,255,.15);display:flex;justify-content:space-between;font-size:11px;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:1px}
+.landing .footer a{color:rgba(255,255,255,.3);text-decoration:none}
+.landing .footer a:hover{color:var(--red)}
+.landing .footer-links{display:flex;gap:20px}
+
+/* RESPONSIVE */
+@media(max-width:1024px){
+  .landing .hero{grid-template-columns:1fr;gap:32px}
+  .landing .hero-right{min-height:500px}
+  .landing .features-strip{grid-template-columns:repeat(2,1fr)}
+  .landing .feat:nth-child(2){border-right:none}
+  .landing .feat:nth-child(3),.landing .feat:nth-child(4){border-top:3px solid rgba(255,255,255,.15)}
+  .landing .pop{display:none}
+  .landing .pricing-grid{grid-template-columns:1fr}
+  .landing .pricing-card{border-right:3px solid rgba(255,255,255,.15)!important;border-bottom:none}
+  .landing .pricing-card:last-child{border-bottom:3px solid rgba(255,255,255,.15)}
+}
+@media(max-width:640px){
+  .landing .nav{padding:12px 16px}
+  .landing .nav-links a:not(.nav-cta){display:none}
+  .landing .dateline{padding:8px 16px;flex-direction:column;gap:4px}
+  .landing .dateline-left{flex-direction:column;gap:2px}
+  .landing .hero{padding:32px 16px}
+  .landing .hero-headline{letter-spacing:-1px}
+  .landing .iphone{width:300px;height:610px;border-radius:44px}
+  .landing .iphone-screen{border-radius:44px}
+  .landing .call-overlay{border-radius:44px}
+  .landing .dynamic-island{width:110px;height:32px;top:10px}
+  .landing .features-strip{grid-template-columns:1fr}
+  .landing .feat{border-right:none;border-bottom:3px solid rgba(255,255,255,.15)}
+  .landing .feat:last-child{border-bottom:none}
+  .landing .demo-section{padding:32px 16px}
+  .landing .tg-iphone{width:300px;height:650px;border-radius:44px}
+  .landing .tg-screen{border-radius:44px}
+  .landing .cta-section{padding:48px 16px}
+  .landing .footer{flex-direction:column;gap:8px;padding:16px}
+}
