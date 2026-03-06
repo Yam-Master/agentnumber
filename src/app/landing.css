@@ -24,8 +24,8 @@
 .landing .hero-right{display:flex;align-items:center;justify-content:center;position:relative;min-height:620px}
 .landing .hero-headline{font-size:clamp(60px,10vw,160px);font-weight:900;line-height:.88;text-transform:uppercase;letter-spacing:-3px;margin-bottom:24px}
 .landing .hero-headline .red{color:var(--red)}
-.landing .hero-byline{font-size:11px;text-transform:uppercase;letter-spacing:2px;color:var(--gray);margin-bottom:20px;border-left:var(--border-red);padding-left:12px}
-.landing .hero-lede{font-size:16px;line-height:1.7;margin-bottom:28px;max-width:520px}
+.landing .hero-byline{font-size:11px;text-transform:uppercase;letter-spacing:2px;color:var(--gray);margin-bottom:20px;border-left:var(--border-red);padding-left:12px;font-weight:700}
+.landing .hero-lede{font-size:16px;line-height:1.7;margin-bottom:28px;max-width:520px;font-weight:700}
 .landing .hero-lede strong{color:var(--red)}
 .landing .hero-ctas{display:flex;gap:16px;margin-bottom:32px;flex-wrap:wrap}
 .landing .btn-primary{background:var(--red);color:#fff;padding:14px 32px;font-family:inherit;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:2px;border:none;cursor:pointer;transition:background .2s;text-decoration:none;display:inline-block}
@@ -39,54 +39,83 @@
 .landing .hero-stats td:last-child{font-weight:700;text-align:right}
 .landing .hero-stats tr+tr td{border-top:1px solid #ddd}
 
-/* iPHONE */
-.landing .iphone{width:370px;height:750px;background:#000;border-radius:52px;position:relative;overflow:hidden;box-shadow:0 0 0 3px #1a1a1a,0 0 0 6px #333,0 30px 80px rgba(0,0,0,.35)}
-.landing .iphone-screen{position:absolute;top:0;left:0;right:0;bottom:0;background:#000;border-radius:52px;overflow:hidden;display:flex;flex-direction:column}
-.landing .dynamic-island{width:126px;height:36px;background:#000;border-radius:20px;position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:20;display:flex;align-items:center;justify-content:center}
-.landing .dynamic-island::before{content:'';width:10px;height:10px;background:#111;border-radius:50%;border:1.5px solid #222}
-.landing .iphone-status{display:flex;justify-content:space-between;align-items:center;padding:16px 28px 0;font-size:12px;font-weight:600;color:#fff;position:relative;z-index:10;height:54px}
-.landing .iphone-status .time{font-size:15px;font-weight:700;letter-spacing:.5px}
-.landing .status-icons{display:flex;align-items:center;gap:5px}
-.landing .status-icons svg{width:16px;height:16px;fill:#fff}
-.landing .battery{width:24px;height:11px;border:1.5px solid rgba(255,255,255,.5);border-radius:3px;position:relative;display:flex;align-items:center;padding:1.5px}
-.landing .battery::after{content:'';position:absolute;right:-4px;top:50%;transform:translateY(-50%);width:2px;height:5px;background:rgba(255,255,255,.5);border-radius:0 1px 1px 0}
-.landing .battery-fill{width:70%;height:100%;background:#34C759;border-radius:1.5px}
-.landing .app-area{flex:1;display:flex;flex-direction:column;padding:8px 0 0;overflow:hidden;position:relative}
-.landing .app-header{padding:8px 24px 12px;display:flex;justify-content:space-between;align-items:center}
-.landing .app-title{font-family:'Courier New',monospace;font-size:13px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:3px}
-.landing .app-badge{font-size:9px;background:var(--red);color:#fff;padding:2px 8px;font-family:'Courier New',monospace;letter-spacing:1px;text-transform:uppercase;font-weight:700;border-radius:3px}
-.landing .app-divider{height:1px;background:rgba(255,255,255,.08);margin:0 24px}
-.landing .number-display{padding:24px 24px 16px;text-align:center}
-.landing .number-display .label{font-size:10px;text-transform:uppercase;letter-spacing:3px;color:rgba(255,255,255,.35);margin-bottom:8px;font-family:'Courier New',monospace}
-.landing .number-display .number{font-size:32px;font-weight:900;color:#fff;letter-spacing:2px;font-family:'Courier New',monospace}
-.landing .number-display .sub{font-size:10px;color:var(--red);text-transform:uppercase;letter-spacing:2px;margin-top:6px;font-family:'Courier New',monospace}
-.landing .feed-area{flex:1;padding:0 20px;overflow:hidden;position:relative}
-.landing .feed-label{font-size:9px;text-transform:uppercase;letter-spacing:3px;color:var(--red);margin-bottom:12px;display:flex;align-items:center;gap:6px;font-family:'Courier New',monospace;padding:0 4px}
-.landing .feed-dot{width:5px;height:5px;background:var(--red);border-radius:50%;animation:landing-blink 1.5s step-end infinite}
+/* iPHONE — matched to real iOS 18 screenshots */
 @keyframes landing-blink{0%,100%{opacity:1}50%{opacity:0}}
-.landing .msg{padding:10px 12px;margin-bottom:8px;font-size:12px;line-height:1.5;opacity:0;transform:translateY(24px);transition:all .45s cubic-bezier(.23,1,.32,1);border-radius:12px;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif}
-.landing .msg.visible{opacity:1;transform:translateY(0)}
-.landing .msg.outbound{background:var(--red);color:#fff;margin-left:40px;border-bottom-right-radius:4px}
-.landing .msg.inbound{background:#1C1C1E;color:rgba(255,255,255,.9);margin-right:40px;border-bottom-left-radius:4px}
-.landing .msg .msg-meta{font-size:9px;margin-top:4px;opacity:.5;font-family:'Courier New',monospace}
-.landing .call-overlay{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.97);display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;transition:opacity .4s;pointer-events:none;z-index:30;border-radius:52px}
-.landing .call-overlay.active{opacity:1}
-.landing .call-ring{width:90px;height:90px;border:2px solid var(--red);border-radius:50%;display:flex;align-items:center;justify-content:center;position:relative;margin-bottom:24px}
-.landing .call-ring::before,.landing .call-ring::after{content:'';position:absolute;border:1.5px solid var(--red);border-radius:50%;opacity:0}
-.landing .call-overlay.active .call-ring::before{animation:landing-ringExpand 1.5s ease-out infinite}
-.landing .call-overlay.active .call-ring::after{animation:landing-ringExpand 1.5s ease-out .5s infinite}
-@keyframes landing-ringExpand{0%{width:90px;height:90px;opacity:.6}100%{width:200px;height:200px;opacity:0}}
-.landing .call-icon{font-size:32px;color:var(--red);animation:landing-ringShake .5s ease-in-out infinite}
-@keyframes landing-ringShake{0%,100%{transform:rotate(0)}20%{transform:rotate(-15deg)}40%{transform:rotate(15deg)}60%{transform:rotate(-10deg)}80%{transform:rotate(10deg)}}
-.landing .call-label{font-size:11px;text-transform:uppercase;letter-spacing:4px;color:rgba(255,255,255,.4);margin-bottom:6px;font-family:'Courier New',monospace}
-.landing .call-number{font-size:24px;font-weight:700;color:#fff;letter-spacing:1px;font-family:-apple-system,BlinkMacSystemFont,sans-serif}
-.landing .call-status{font-size:11px;text-transform:uppercase;letter-spacing:3px;color:var(--red);margin-top:16px;animation:landing-blink 1s step-end infinite;font-family:'Courier New',monospace}
-.landing .call-actions{display:flex;gap:40px;margin-top:36px}
-.landing .call-btn{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;border:none;cursor:pointer}
-.landing .call-btn.decline{background:#FF3B30}
-.landing .call-btn.accept{background:#34C759}
-.landing .home-indicator{padding:8px 0 10px;display:flex;justify-content:center}
-.landing .home-bar{width:134px;height:5px;background:rgba(255,255,255,.2);border-radius:3px}
+@keyframes landing-bubbleIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* Frame */
+.landing .ip{width:375px;height:812px;background:#000;border-radius:55px;position:relative;overflow:hidden;box-shadow:inset 0 0 0 2px #2a2a2a,0 0 0 3px #1a1a1a,0 0 0 5px #111,0 30px 80px rgba(0,0,0,.4);display:flex;flex-direction:column}
+
+/* Dynamic Island */
+.landing .ip-notch{width:126px;height:37px;background:#000;border-radius:20px;position:absolute;top:11px;left:50%;transform:translateX(-50%);z-index:50}
+.landing .ip-cam{width:12px;height:12px;background:radial-gradient(circle at 35% 35%,#1c1c2e,#000);border-radius:50%;border:1.5px solid #1a1a1a;position:absolute;right:22px;top:50%;transform:translateY(-50%)}
+
+/* Status bar */
+.landing .ip-status{display:flex;justify-content:space-between;align-items:center;padding:17px 30px 0;height:54px;position:relative;z-index:10;flex-shrink:0}
+.landing .ip-clock{font-size:16px;font-weight:600;color:#fff;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;letter-spacing:-0.3px}
+.landing .ip-indicators{display:flex;align-items:center;gap:6px}
+.landing .ip-batt{display:flex;align-items:center;gap:1px}
+.landing .ip-batt-shell{width:25px;height:12px;border:1.5px solid rgba(255,255,255,.35);border-radius:3.5px;padding:2px;display:flex}
+.landing .ip-batt-juice{width:70%;background:#34C759;border-radius:1.5px}
+.landing .ip-batt-tip{width:2px;height:5px;background:rgba(255,255,255,.35);border-radius:0 2px 2px 0;margin-left:1px}
+
+/* Home indicator */
+.landing .ip-home{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);z-index:50}
+.landing .ip-home-pill{width:134px;height:5px;background:rgba(255,255,255,.2);border-radius:3px}
+
+/* ================================
+   SMS / iMessage — matched to screenshot
+   ================================ */
+.landing .im{flex:1;display:flex;flex-direction:column;background:#000;overflow:hidden}
+
+/* Nav: centered avatar + number pill (like screenshot) */
+.landing .im-nav{display:flex;align-items:flex-start;padding:4px 16px 6px;flex-shrink:0;position:relative}
+.landing .im-back-btn{position:absolute;left:16px;top:8px;z-index:2}
+.landing .im-center{display:flex;flex-direction:column;align-items:center;width:100%}
+.landing .im-ava-oc{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#FF6B35,#FF2200);display:flex;align-items:center;justify-content:center;margin-bottom:6px;font-size:18px;font-weight:700;color:#fff;font-family:-apple-system,BlinkMacSystemFont,sans-serif;letter-spacing:1px}
+.landing .im-pill{display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.08);border-radius:16px;padding:4px 12px;font-size:14px;font-weight:500;color:#fff;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif}
+
+/* Date label */
+.landing .im-date{text-align:center;font-size:11px;color:rgba(255,255,255,.35);padding:8px 0 4px;font-family:-apple-system,BlinkMacSystemFont,sans-serif}
+
+/* Messages — gray on left, blue on right, with tails */
+.landing .im-msgs{flex:1;padding:4px 10px;overflow:hidden;display:flex;flex-direction:column;gap:3px}
+.landing .im-bub{max-width:78%;padding:8px 12px;font-size:15px;line-height:1.35;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;border-radius:18px;animation:landing-bubbleIn .3s ease-out both;word-wrap:break-word}
+.landing .im-me{background:#007AFF;color:#fff;align-self:flex-end}
+.landing .im-them{background:#3A3A3C;color:#fff;align-self:flex-start}
+
+/* Input bar — exact match: circle +, pill field with placeholder + mic inside */
+.landing .im-bar{display:flex;align-items:center;gap:6px;padding:6px 10px 28px;flex-shrink:0}
+.landing .im-plus-btn{flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.landing .im-input-wrap{flex:1;border:1px solid rgba(255,255,255,.18);border-radius:20px;padding:7px 12px;display:flex;align-items:center;justify-content:space-between}
+.landing .im-placeholder{font-size:16px;color:rgba(255,255,255,.25);font-family:-apple-system,BlinkMacSystemFont,sans-serif}
+.landing .im-mic{flex-shrink:0}
+
+/* ================================
+   Call Screen — blue gradient, exact iOS 18 layout
+   Row 1: Audio / FaceTime / Mute
+   Row 2: More / End / Keypad
+   ================================ */
+.landing .cs{flex:1;display:flex;flex-direction:column;background:linear-gradient(165deg,#1a2744 0%,#1e3a5f 30%,#1a4a6e 55%,#1e5577 75%,#2a6080 100%);overflow:hidden}
+
+/* Top caller info */
+.landing .cs-top{text-align:center;padding:50px 20px 0;flex-shrink:0}
+.landing .cs-label{font-size:14px;color:rgba(255,255,255,.55);font-family:-apple-system,BlinkMacSystemFont,sans-serif;margin-bottom:4px}
+.landing .cs-number{font-size:34px;font-weight:400;color:#fff;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;letter-spacing:-.5px;line-height:1.15}
+.landing .cs-location{font-size:15px;color:rgba(255,255,255,.5);font-family:-apple-system,BlinkMacSystemFont,sans-serif;margin-top:6px}
+
+/* Spacer pushes grid to bottom */
+.landing .cs-spacer{flex:1}
+
+/* 2×3 grid of call buttons at bottom */
+.landing .cs-grid{display:grid;grid-template-columns:repeat(3,1fr);row-gap:20px;column-gap:0;padding:0 28px 56px;justify-items:center}
+
+/* Individual button */
+.landing .cs-btn-wrap{display:flex;flex-direction:column;align-items:center;gap:7px}
+.landing .cs-btn-circle{width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,.12);border:1.5px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center}
+.landing .cs-red{background:#FF3B30!important;border-color:transparent!important}
+.landing .cs-mint{background:#C8FAE8!important;border-color:transparent!important}
+.landing .cs-btn-label{font-size:13px;color:rgba(255,255,255,.7);font-family:-apple-system,BlinkMacSystemFont,sans-serif}
 
 /* DARK LOWER SECTION */
 .landing .dark-section{background:var(--black);color:#fff}
@@ -212,10 +241,14 @@
   .landing .dateline-left{flex-direction:column;gap:2px}
   .landing .hero{padding:32px 16px}
   .landing .hero-headline{letter-spacing:-1px}
-  .landing .iphone{width:300px;height:610px;border-radius:44px}
-  .landing .iphone-screen{border-radius:44px}
-  .landing .call-overlay{border-radius:44px}
-  .landing .dynamic-island{width:110px;height:32px;top:10px}
+  .landing .ip{width:300px;height:650px;border-radius:44px}
+  .landing .ip-notch{width:110px;height:32px;top:10px;border-radius:16px}
+  .landing .im-bub{font-size:13.5px;padding:6px 10px}
+  .landing .im-ava-oc{width:44px;height:44px;font-size:15px}
+  .landing .im-pill{font-size:12px}
+  .landing .cs-number{font-size:26px}
+  .landing .cs-btn-circle{width:58px;height:58px}
+  .landing .cs-grid{padding:0 20px 40px;row-gap:14px}
   .landing .features-strip{grid-template-columns:1fr}
   .landing .feat{border-right:none;border-bottom:3px solid rgba(255,255,255,.15)}
   .landing .feat:last-child{border-bottom:none}

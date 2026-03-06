@@ -13,7 +13,6 @@ export default function OnboardingPage() {
   const [creatingKey, setCreatingKey] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [areaCode, setAreaCode] = useState("941");
-  const [systemPrompt, setSystemPrompt] = useState("");
   const [provisioning, setProvisioning] = useState(false);
   const [error, setError] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
@@ -74,9 +73,7 @@ export default function OnboardingPage() {
         },
         body: JSON.stringify({
           area_code: areaCode,
-          system_prompt: systemPrompt || "You are a helpful AI assistant.",
-          first_message: "Hello! How can I help you?",
-          voice_id: "cgSgspJ2msm6clMCkdW9",
+          system_prompt: "You are a helpful AI assistant.",
         }),
       });
       const data = await provRes.json();
@@ -111,7 +108,7 @@ export default function OnboardingPage() {
 
       {/* Progress */}
       <div className="flex border-b-3 border-border">
-        {["01 // API KEY", "02 // CREDITS", "03 // NUMBER"].map((label, i) => (
+        {["01 // API KEY", "02 // CREDITS", "03 // SMS NUMBER"].map((label, i) => (
           <div
             key={i}
             className={`flex-1 py-3 px-6 text-xs font-bold uppercase tracking-widest border-r-3 border-border last:border-r-0 transition-colors ${
@@ -151,8 +148,6 @@ export default function OnboardingPage() {
           <StepProvisionNumber
             areaCode={areaCode}
             setAreaCode={setAreaCode}
-            systemPrompt={systemPrompt}
-            setSystemPrompt={setSystemPrompt}
             loading={provisioning}
             error={error}
             onProvision={handleProvision}
@@ -296,21 +291,19 @@ function StepAddCredits({ onNext }: { apiKey: string; onNext: () => void }) {
 }
 
 function StepProvisionNumber({
-  areaCode, setAreaCode, systemPrompt, setSystemPrompt, loading, error, onProvision,
+  areaCode, setAreaCode, loading, error, onProvision,
 }: {
   areaCode: string;
   setAreaCode: (v: string) => void;
-  systemPrompt: string;
-  setSystemPrompt: (v: string) => void;
   loading: boolean;
   error: string;
   onProvision: () => void;
 }) {
   return (
     <div className="w-full max-w-lg">
-      <h1 className="text-2xl font-bold uppercase tracking-wider mb-2">Get Your Number</h1>
+      <h1 className="text-2xl font-bold uppercase tracking-wider mb-2">Get Your SMS Number</h1>
       <p className="text-sm text-foreground mb-8 uppercase tracking-wider">
-        Provision a real US phone number for your agent
+        Provision a real US phone number for SMS
       </p>
 
       <div className="border-3 border-border p-8 space-y-5">
@@ -326,19 +319,6 @@ function StepProvisionNumber({
           />
         </div>
 
-        <div>
-          <label className="block text-xs text-foreground mb-1.5 uppercase tracking-widest">
-            System Prompt (What should your agent do?)
-          </label>
-          <textarea
-            value={systemPrompt}
-            onChange={(e) => setSystemPrompt(e.target.value)}
-            placeholder="You are a helpful AI assistant that answers customer questions about..."
-            rows={4}
-            className="w-full bg-transparent border-3 border-border px-4 py-3 text-foreground placeholder:text-foreground/40 text-sm focus:outline-none focus:border-accent resize-none"
-          />
-        </div>
-
         <div className="border-t-3 border-border pt-4 space-y-1">
           <div className="flex justify-between text-xs">
             <span className="text-foreground uppercase tracking-wider">Number cost</span>
@@ -346,7 +326,11 @@ function StepProvisionNumber({
           </div>
           <div className="flex justify-between text-xs">
             <span className="text-foreground uppercase tracking-wider">Includes</span>
-            <span className="font-bold">SMS + Voice</span>
+            <span className="font-bold">SMS (Send + Receive)</span>
+          </div>
+          <div className="flex justify-between text-xs">
+            <span className="text-foreground uppercase tracking-wider">Voice</span>
+            <span className="font-bold">Set up later in dashboard</span>
           </div>
         </div>
 
@@ -355,7 +339,7 @@ function StepProvisionNumber({
           disabled={loading}
           className="w-full bg-accent hover:bg-accent-dim disabled:opacity-50 text-white font-bold py-3 uppercase tracking-widest text-sm transition-colors"
         >
-          {loading ? "Provisioning..." : "Provision Number — $5"}
+          {loading ? "Provisioning..." : "Provision SMS Number — $5"}
         </button>
 
         {error && <p className="text-accent text-xs text-center">{error}</p>}
@@ -431,18 +415,18 @@ function StepSuccess({ phoneNumber, onDashboard }: { phoneNumber: string; onDash
         </div>
 
         <div className="text-xs text-accent uppercase tracking-widest font-bold">
-          Active &bull; SMS + Voice
+          Active &bull; SMS Ready
         </div>
 
         <div className="mt-8 flex justify-center gap-4">
           <div className="text-center">
             <div className="text-xs text-foreground uppercase tracking-widest">SMS</div>
-            <div className="text-sm font-bold text-accent">$0.02</div>
+            <div className="text-sm font-bold text-accent">$0.02 / msg</div>
           </div>
           <div className="w-px bg-border" />
           <div className="text-center">
             <div className="text-xs text-foreground uppercase tracking-widest">Voice</div>
-            <div className="text-sm font-bold text-accent">$0.05/min</div>
+            <div className="text-sm font-bold text-foreground">Set up in dashboard</div>
           </div>
         </div>
       </div>
