@@ -23,32 +23,33 @@ export default async function NumbersPage() {
   return (
     <div>
       <div className="mb-6">
-        <p className="text-sm text-muted">Dashboard &rsaquo; <span className="text-foreground">Numbers</span></p>
+        <p className="text-xs text-muted uppercase tracking-widest mb-2">Dashboard // Numbers</p>
+        <h1 className="text-xl font-bold uppercase tracking-wider">Phone Numbers</h1>
       </div>
 
-      <div className="rounded-xl border border-border bg-zinc-900/50 p-6">
+      <div className="border-3 border-border p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-bold tracking-wider uppercase">Phone Numbers</h2>
-          <span className="text-xs text-muted">Provision via API: POST /api/v0/numbers</span>
+          <h2 className="text-xs font-bold tracking-widest uppercase">Active Numbers</h2>
+          <span className="text-[10px] text-muted uppercase tracking-widest">POST /api/v0/numbers</span>
         </div>
 
         {!numbers?.length ? (
-          <p className="text-sm text-muted py-8 text-center">No numbers provisioned yet</p>
+          <p className="text-xs text-muted py-8 text-center uppercase tracking-widest">No numbers provisioned yet</p>
         ) : (
-          <div className="space-y-0">
+          <div>
             {numbers.map((n) => (
               <div key={n.id} className="flex items-center justify-between py-3 border-b border-border last:border-0">
                 <div className="flex items-center gap-4">
-                  <span className="font-mono text-sm font-medium">{n.phone_number}</span>
-                  <span className={`text-xs px-2 py-0.5 rounded ${
+                  <span className="text-sm font-bold">{n.phone_number}</span>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 border-2 uppercase tracking-wider ${
                     n.status === "active"
-                      ? "bg-green-500/20 text-green-400"
-                      : "bg-zinc-500/20 text-zinc-400"
+                      ? "border-accent text-accent"
+                      : "border-muted text-muted"
                   }`}>{n.status}</span>
                 </div>
-                <div className="flex items-center gap-4 text-xs text-muted">
+                <div className="flex items-center gap-4 text-[10px] text-muted uppercase tracking-wider">
                   <span>{n.inbound_mode}</span>
-                  <span className="font-mono truncate max-w-48">{n.webhook_url}</span>
+                  <span className="truncate max-w-48">{n.webhook_url}</span>
                   <span>{new Date(n.created_at).toLocaleDateString()}</span>
                 </div>
               </div>

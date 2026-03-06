@@ -18,7 +18,6 @@ export default async function DashboardPage() {
 
   const orgId = member?.org_id;
 
-  // Fetch all data in parallel
   const [numbersRes, balanceRes, keysRes, inboundRes, outboundRes, recentCallsRes, callActivityRes] = await Promise.all([
     orgId
       ? service.from("numbers").select("id", { count: "exact", head: true }).eq("org_id", orgId).eq("status", "active")
@@ -50,46 +49,40 @@ export default async function DashboardPage() {
   const outboundCount = outboundRes.count ?? 0;
   const recentCalls = (recentCallsRes.data as CallRow[]) || [];
 
-  // Build hourly activity data for chart
   const callDates = ((callActivityRes.data as { created_at: string }[]) || []).map(c => c.created_at);
   const activityData = buildHourlyActivity(callDates);
 
   return (
     <div>
       <div className="mb-8">
-        <p className="text-sm text-muted">Dashboard &rsaquo; <span className="text-foreground">Overview</span></p>
+        <p className="text-xs text-muted uppercase tracking-widest">
+          Dashboard // <span className="text-foreground">Overview</span>
+        </p>
       </div>
 
       {/* Call Activity */}
-      <div className="rounded-xl border border-border bg-zinc-900/50 p-6 mb-6">
+      <div className="border-3 border-border p-6 mb-6">
         <div className="flex items-start justify-between mb-6">
           <div>
-            <h2 className="text-sm font-bold tracking-wider uppercase">Call Activity</h2>
-            <p className="text-xs text-muted mt-1">1-hour call volume for the last 7 days</p>
+            <h2 className="text-xs font-bold tracking-widest uppercase">Call Activity</h2>
+            <p className="text-[10px] text-muted mt-1 uppercase tracking-wider">1-hour volume // last 7 days</p>
           </div>
           <div className="flex items-center gap-6">
-            <span className="text-xs text-muted px-3 py-1 rounded border border-border">7 days</span>
+            <span className="text-[10px] text-muted px-3 py-1 border-3 border-border uppercase tracking-widest">7 Days</span>
             <div className="flex items-center gap-5">
               <div className="text-center">
                 <div className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full bg-blue-400" />
-                  <span className="text-xs text-muted">Outbound</span>
+                  <div className="w-2 h-2 bg-accent" />
+                  <span className="text-[10px] text-muted uppercase">Out</span>
                 </div>
                 <p className="text-xl font-bold mt-0.5">{outboundCount}</p>
               </div>
               <div className="text-center">
                 <div className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full bg-green-400" />
-                  <span className="text-xs text-muted">Inbound</span>
+                  <div className="w-2 h-2 bg-foreground" />
+                  <span className="text-[10px] text-muted uppercase">In</span>
                 </div>
                 <p className="text-xl font-bold mt-0.5">{inboundCount}</p>
-              </div>
-              <div className="text-center">
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full bg-red-400" />
-                  <span className="text-xs text-muted">Failed</span>
-                </div>
-                <p className="text-xl font-bold mt-0.5">0</p>
               </div>
             </div>
           </div>
@@ -97,35 +90,35 @@ export default async function DashboardPage() {
         <CallActivityChart data={activityData} />
       </div>
 
-      {/* Bottom section: Recent Calls + Resources */}
+      {/* Bottom section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Recent Calls */}
-        <div className="lg:col-span-2 rounded-xl border border-border bg-zinc-900/50 p-6">
+        <div className="lg:col-span-2 border-3 border-border p-6">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-sm font-bold tracking-wider uppercase">Recent Calls</h2>
-              <p className="text-xs text-muted mt-1">Latest calls across all numbers</p>
+              <h2 className="text-xs font-bold tracking-widest uppercase">Recent Calls</h2>
+              <p className="text-[10px] text-muted mt-1 uppercase tracking-wider">Latest calls across all numbers</p>
             </div>
-            <Link href="/dashboard/calls" className="text-xs text-muted hover:text-foreground transition-colors">
-              VIEW ALL &rarr;
+            <Link href="/dashboard/calls" className="text-[10px] text-muted hover:text-accent transition-colors uppercase tracking-widest">
+              View All &rarr;
             </Link>
           </div>
 
           {recentCalls.length === 0 ? (
-            <p className="text-sm text-muted py-8 text-center">No calls yet</p>
+            <p className="text-sm text-muted py-8 text-center uppercase tracking-wider">No calls yet</p>
           ) : (
-            <div className="space-y-0">
+            <div>
               {recentCalls.map((call) => (
                 <div key={call.id} className="flex items-center justify-between py-3 border-b border-border last:border-0">
                   <div className="flex items-center gap-3">
-                    <span className={`text-xs font-medium px-2 py-0.5 rounded ${
+                    <span className={`text-[10px] font-bold px-2 py-0.5 border-2 uppercase tracking-wider ${
                       call.direction === "inbound"
-                        ? "bg-green-500/20 text-green-400"
-                        : "bg-blue-500/20 text-blue-400"
+                        ? "border-foreground text-foreground"
+                        : "border-accent text-accent"
                     }`}>
                       {call.direction === "inbound" ? "IN" : "OUT"}
                     </span>
-                    <span className="text-sm font-mono">{call.customer_number || "Unknown"}</span>
+                    <span className="text-sm font-bold">{call.customer_number || "Unknown"}</span>
                     <span className="text-xs text-muted">{formatDuration(call.duration)}</span>
                   </div>
                   <div className="flex items-center gap-3">
@@ -142,38 +135,30 @@ export default async function DashboardPage() {
 
         {/* Resources */}
         <div className="space-y-6">
-          <div className="rounded-xl border border-border bg-zinc-900/50 p-5">
-            <h3 className="text-sm font-bold tracking-wider uppercase mb-4">Resources</h3>
+          <div className="border-3 border-border p-5">
+            <h3 className="text-[10px] font-bold tracking-widest uppercase mb-4">Resources</h3>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-muted text-xs">#</span>
-                  <span className="text-sm">Numbers</span>
-                </div>
-                <span className="text-sm font-bold">{activeNumbers}</span>
+                <span className="text-xs uppercase tracking-wider"># Numbers</span>
+                <span className="text-sm font-bold text-accent">{activeNumbers}</span>
               </div>
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-muted text-xs">K</span>
-                  <span className="text-sm">API Keys</span>
-                </div>
-                <span className="text-sm font-bold">{activeKeys}</span>
+                <span className="text-xs uppercase tracking-wider">K API Keys</span>
+                <span className="text-sm font-bold text-accent">{activeKeys}</span>
               </div>
             </div>
           </div>
 
-          <div className="rounded-xl border border-border bg-zinc-900/50 p-5">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-sm text-muted">Credit Balance</span>
-            </div>
-            <p className="text-3xl font-bold text-accent">${(balance / 100).toFixed(2)}</p>
-            <Link href="/dashboard/credits" className="text-xs text-muted hover:text-foreground transition-colors mt-2 block">
-              Manage credits &rarr;
+          <div className="border-3 border-border p-5">
+            <span className="text-[10px] text-muted uppercase tracking-widest">Credit Balance</span>
+            <p className="text-3xl font-bold text-accent mt-1">${(balance / 100).toFixed(2)}</p>
+            <Link href="/dashboard/credits" className="text-[10px] text-muted hover:text-accent transition-colors mt-2 block uppercase tracking-widest">
+              Manage &rarr;
             </Link>
           </div>
 
-          <div className="rounded-xl border border-border bg-zinc-900/50 p-5">
-            <h3 className="text-sm font-bold tracking-wider uppercase mb-3">Getting Started</h3>
+          <div className="border-3 border-border p-5">
+            <h3 className="text-[10px] font-bold tracking-widest uppercase mb-3">Getting Started</h3>
             <div className="space-y-2">
               <CheckItem done={activeKeys > 0} label="Create an API key" href="/dashboard/api-keys" />
               <CheckItem done={balance > 0} label="Add credits" href="/dashboard/credits" />
@@ -200,12 +185,12 @@ interface CallRow {
 function CheckItem({ done, label, href }: { done: boolean; label: string; href?: string }) {
   const content = (
     <div className="flex items-center gap-2">
-      <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-        done ? "border-accent bg-accent/20" : "border-border"
+      <div className={`w-3 h-3 border-2 flex items-center justify-center ${
+        done ? "border-accent bg-accent" : "border-border"
       }`}>
-        {done && <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2.5 5L4.5 7L7.5 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-accent" /></svg>}
+        {done && <span className="text-white text-[8px] font-bold">&check;</span>}
       </div>
-      <span className={`text-xs ${done ? "text-muted line-through" : "text-foreground"}`}>{label}</span>
+      <span className={`text-[10px] uppercase tracking-wider ${done ? "text-muted line-through" : "text-foreground"}`}>{label}</span>
     </div>
   );
 
@@ -235,7 +220,7 @@ function formatRelativeTime(dateStr: string): string {
 
 function buildHourlyActivity(timestamps: string[]): { label: string; count: number }[] {
   const now = Date.now();
-  const bucketCount = 42; // ~7 days in 4-hour buckets
+  const bucketCount = 42;
   const bucketSize = 4 * 60 * 60 * 1000;
   const start = now - bucketCount * bucketSize;
 

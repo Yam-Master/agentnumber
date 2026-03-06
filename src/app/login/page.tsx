@@ -41,63 +41,65 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4 font-sans">
+    <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <Link href="/" className="block text-center mb-8">
-          <span className="text-2xl font-bold tracking-tight">AgentNumber</span>
+          <span className="text-xl font-bold tracking-widest uppercase">
+            AGENT<span className="text-accent">[NUMBER]</span>
+          </span>
         </Link>
 
-        <div className="rounded-2xl border border-border bg-zinc-900/50 p-8">
-          <h1 className="text-xl font-semibold text-center mb-6">
-            Log in to your account
+        <div className="border-3 border-border p-8">
+          <h1 className="text-lg font-bold uppercase tracking-widest text-center mb-6">
+            Log In
           </h1>
 
           <button
             onClick={handleGoogleLogin}
-            className="w-full border border-border bg-zinc-800 hover:bg-zinc-700 text-foreground font-medium py-2.5 rounded-lg transition-colors mb-4"
+            className="w-full border-3 border-border bg-transparent hover:bg-surface text-foreground font-bold py-3 uppercase tracking-wider text-sm transition-colors mb-4"
           >
             Continue with Google
           </button>
 
           <div className="flex items-center gap-3 my-4">
             <div className="flex-1 h-px bg-border" />
-            <span className="text-xs text-muted">or</span>
+            <span className="text-xs text-muted uppercase tracking-widest">or</span>
             <div className="flex-1 h-px bg-border" />
           </div>
 
           <form onSubmit={handleLogin} className="space-y-3">
             <input
               type="email"
-              placeholder="Email"
+              placeholder="EMAIL"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full bg-zinc-800 border border-border rounded-lg px-4 py-2.5 text-foreground placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-accent"
+              className="w-full bg-transparent border-3 border-border px-4 py-3 text-foreground placeholder:text-muted text-sm uppercase tracking-wider focus:outline-none focus:border-accent"
             />
             <input
               type="password"
-              placeholder="Password"
+              placeholder="PASSWORD"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full bg-zinc-800 border border-border rounded-lg px-4 py-2.5 text-foreground placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-accent"
+              className="w-full bg-transparent border-3 border-border px-4 py-3 text-foreground placeholder:text-muted text-sm uppercase tracking-wider focus:outline-none focus:border-accent"
             />
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-accent hover:bg-accent-light disabled:opacity-50 text-white font-medium py-2.5 rounded-lg transition-colors"
+              className="w-full bg-accent hover:bg-accent-dim disabled:opacity-50 text-white font-bold py-3 uppercase tracking-widest text-sm transition-colors"
             >
-              {loading ? "Logging in..." : "Log in"}
+              {loading ? "Logging in..." : "Log In"}
             </button>
           </form>
 
           {error && (
-            <p className="text-red-400 text-sm text-center mt-3">{error}</p>
+            <p className="text-accent text-sm text-center mt-3">{error}</p>
           )}
 
-          <p className="text-sm text-muted text-center mt-6">
-            Don&apos;t have an account?{" "}
-            <Link href="/signup" className="text-accent-light hover:underline">
+          <p className="text-sm text-muted text-center mt-6 uppercase tracking-wider">
+            No account?{" "}
+            <Link href="/signup" className="text-accent hover:underline">
               Sign up
             </Link>
           </p>

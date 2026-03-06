@@ -41,106 +41,82 @@ export default function CallsPage() {
   }, []);
 
   if (loading) {
-    return (
-      <div className="text-center text-muted py-12">Loading calls...</div>
-    );
+    return <div className="text-center text-muted py-12 text-xs uppercase tracking-widest">Loading calls...</div>;
   }
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-8">Call Log</h1>
+      <div className="mb-6">
+        <p className="text-xs text-muted uppercase tracking-widest mb-2">Dashboard // Calls</p>
+        <h1 className="text-xl font-bold uppercase tracking-wider">Call Log</h1>
+      </div>
 
       {calls.length === 0 ? (
-        <div className="rounded-2xl border border-border bg-zinc-900/50 p-12 text-center">
-          <p className="text-muted">No calls yet. Make your first call from the Agents page.</p>
+        <div className="border-3 border-border p-12 text-center">
+          <p className="text-muted text-xs uppercase tracking-widest">No calls yet</p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {calls.map((call) => (
-            <div
-              key={call.id}
-              className="rounded-xl border border-border bg-zinc-900/50"
-            >
+            <div key={call.id} className="border-3 border-border">
               <button
-                onClick={() =>
-                  setExpandedId(expandedId === call.id ? null : call.id)
-                }
+                onClick={() => setExpandedId(expandedId === call.id ? null : call.id)}
                 className="w-full p-4 flex items-center justify-between text-left"
               >
                 <div className="flex items-center gap-4">
-                  <span
-                    className={`text-xs font-medium px-2 py-0.5 rounded ${
-                      call.direction === "inbound"
-                        ? "bg-blue-500/20 text-blue-400"
-                        : "bg-green-500/20 text-green-400"
-                    }`}
-                  >
+                  <span className={`text-[10px] font-bold px-2 py-0.5 border-2 uppercase tracking-wider ${
+                    call.direction === "inbound"
+                      ? "border-foreground text-foreground"
+                      : "border-accent text-accent"
+                  }`}>
                     {call.direction === "inbound" ? "IN" : "OUT"}
                   </span>
                   <div>
-                    <span className="font-medium">
-                      {call.agents?.name || "Unknown Agent"}
-                    </span>
+                    <span className="font-bold text-sm">{call.agents?.name || "Unknown"}</span>
                     {call.customer_number && (
-                      <span className="text-muted text-sm ml-3 font-mono">
-                        {call.customer_number}
-                      </span>
+                      <span className="text-muted text-sm ml-3">{call.customer_number}</span>
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-4 text-sm text-muted">
+                <div className="flex items-center gap-4 text-xs text-muted">
                   <span>{formatDuration(call.duration)}</span>
-                  <span>
-                    {new Date(call.created_at).toLocaleDateString()}
-                  </span>
-                  <span
-                    className={`text-xs px-2 py-0.5 rounded ${
-                      call.status === "completed"
-                        ? "bg-green-500/20 text-green-400"
-                        : call.status === "initiated"
-                          ? "bg-yellow-500/20 text-yellow-400"
-                          : "bg-zinc-500/20 text-zinc-400"
-                    }`}
-                  >
+                  <span>{new Date(call.created_at).toLocaleDateString()}</span>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 border-2 uppercase ${
+                    call.status === "completed"
+                      ? "border-foreground text-foreground"
+                      : "border-muted text-muted"
+                  }`}>
                     {call.status || "unknown"}
                   </span>
                 </div>
               </button>
 
               {expandedId === call.id && (
-                <div className="px-4 pb-4 border-t border-border pt-4 space-y-3">
+                <div className="px-4 pb-4 border-t-3 border-border pt-4 space-y-3">
                   {call.summary && (
                     <div>
-                      <h4 className="text-xs font-medium text-muted mb-1">
-                        Summary
-                      </h4>
+                      <h4 className="text-[10px] font-bold text-muted mb-1 uppercase tracking-widest">Summary</h4>
                       <p className="text-sm">{call.summary}</p>
                     </div>
                   )}
                   {call.transcript && (
                     <div>
-                      <h4 className="text-xs font-medium text-muted mb-1">
-                        Transcript
-                      </h4>
-                      <pre className="text-sm whitespace-pre-wrap bg-zinc-800 rounded-lg p-3 max-h-64 overflow-y-auto font-mono text-xs">
+                      <h4 className="text-[10px] font-bold text-muted mb-1 uppercase tracking-widest">Transcript</h4>
+                      <pre className="text-xs whitespace-pre-wrap bg-black border-3 border-border p-3 max-h-64 overflow-y-auto">
                         {call.transcript}
                       </pre>
                     </div>
                   )}
                   {call.recording_url && (
                     <div>
-                      <h4 className="text-xs font-medium text-muted mb-1">
-                        Recording
-                      </h4>
+                      <h4 className="text-[10px] font-bold text-muted mb-1 uppercase tracking-widest">Recording</h4>
                       <audio controls className="w-full">
                         <source src={call.recording_url} />
                       </audio>
                     </div>
                   )}
                   {call.ended_reason && (
-                    <p className="text-xs text-muted">
-                      Ended: {call.ended_reason}
-                    </p>
+                    <p className="text-[10px] text-muted uppercase tracking-wider">Ended: {call.ended_reason}</p>
                   )}
                 </div>
               )}

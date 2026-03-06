@@ -2,21 +2,24 @@ import Link from "next/link";
 
 export default function DocsPage() {
   return (
-    <div className="min-h-screen bg-background font-sans">
-      <nav className="flex items-center justify-between px-6 py-4 max-w-6xl mx-auto">
-        <Link href="/" className="text-xl font-bold tracking-tight">AgentNumber</Link>
-        <div className="flex gap-6 items-center text-sm">
-          <Link href="/" className="text-muted hover:text-foreground transition-colors">HOME</Link>
-          <Link href="/login" className="text-muted hover:text-foreground transition-colors">LOG IN</Link>
-          <Link href="/signup" className="bg-foreground text-background px-4 py-2 rounded-lg hover:opacity-90 transition-opacity font-medium">
-            GET STARTED
+    <div className="min-h-screen bg-background">
+      <nav className="border-b-3 border-accent px-6 py-4 flex items-center justify-between bg-black">
+        <Link href="/" className="text-sm font-bold tracking-widest uppercase">
+          AGENT<span className="text-accent">[NUMBER]</span>
+        </Link>
+        <div className="flex gap-6 items-center">
+          <Link href="/login" className="text-[10px] text-muted hover:text-foreground transition-colors uppercase tracking-widest">Log In</Link>
+          <Link href="/signup" className="bg-accent text-white px-4 py-2 text-[10px] font-bold uppercase tracking-widest hover:bg-accent-dim transition-colors">
+            Get Started
           </Link>
         </div>
       </nav>
 
       <section className="max-w-4xl mx-auto px-6 py-16">
-        <h2 className="text-3xl font-bold mb-2">API Documentation</h2>
-        <p className="text-muted mb-10">Base URL: <code className="text-accent text-sm">https://agentnumber.com/api/v0</code></p>
+        <h2 className="text-2xl font-bold uppercase tracking-wider mb-2">API Documentation</h2>
+        <p className="text-sm text-muted mb-10 uppercase tracking-wider">
+          Base URL: <code className="text-accent">https://agentnumber.com/api/v0</code>
+        </p>
 
         <DocSection title="Authentication">
           <p className="text-sm text-muted mb-3">
@@ -56,9 +59,6 @@ export default function DocsPage() {
   "webhook_url": "https://your-agent.com/voice",
   "area_code": "415"
 }`}</CodeBlock>
-              <p className="text-muted mt-2 ml-8">
-                Managed mode: we handle the LLM — your agent gets a number in one API call. Webhook mode: calls are routed to your server in OpenAI chat completions format.
-              </p>
             </li>
           </ol>
         </DocSection>
@@ -76,7 +76,7 @@ export default function DocsPage() {
   "stream": true
 }`}</CodeBlock>
           <p className="text-sm text-muted mt-3">
-            Respond with SSE-streamed chat completion chunks (same format as OpenAI). The text content is spoken back to the caller via TTS.
+            Respond with SSE-streamed chat completion chunks. The text is spoken back via TTS.
           </p>
           <CodeBlock title="Your response (SSE stream)">{`data: {"choices":[{"delta":{"content":"Sure, I can"}}]}
 
@@ -88,36 +88,18 @@ data: [DONE]`}</CodeBlock>
         <DocSection title="Numbers API">
           <EndpointBlock method="POST" path="/numbers" desc="Provision a new phone number">
             <CodeBlock title="Request body">{`{
-  "system_prompt": "You are a helpful assistant.",  // managed mode (OR webhook_url)
-  "webhook_url": "https://your-agent.com/voice",   // webhook mode (OR system_prompt)
-  "area_code": "415",                               // optional, default "941"
-  "voice_id": "cgSgspJ2msm6clMCkdW9",              // optional, ElevenLabs voice
-  "first_message": "Hello!",                        // optional, spoken on pickup
-  "inbound_mode": "autopilot",                      // optional
-  "metadata": {}                                    // optional, your custom data
-}`}</CodeBlock>
-            <CodeBlock title="Response 201">{`{
-  "success": true,
-  "data": {
-    "id": "num_a1b2c3d4e5f6",
-    "phone_number": "+14155551234",
-    "webhook_url": "https://your-agent.com/voice",
-    "voice_id": "cgSgspJ2msm6clMCkdW9",
-    "first_message": "Hello!",
-    "inbound_mode": "autopilot",
-    "metadata": {},
-    "status": "active",
-    "created_at": "2026-03-05T12:00:00Z"
-  }
+  "system_prompt": "You are a helpful assistant.",
+  "webhook_url": "https://your-agent.com/voice",
+  "area_code": "415",
+  "voice_id": "cgSgspJ2msm6clMCkdW9",
+  "first_message": "Hello!",
+  "inbound_mode": "autopilot",
+  "metadata": {}
 }`}</CodeBlock>
           </EndpointBlock>
           <EndpointBlock method="GET" path="/numbers" desc="List all your phone numbers" />
           <EndpointBlock method="GET" path="/numbers/:id" desc="Get a specific number" />
-          <EndpointBlock method="PATCH" path="/numbers/:id" desc="Update number config (webhook_url, voice_id, first_message, metadata)">
-            <CodeBlock title="Request body">{`{
-  "webhook_url": "https://new-agent.com/voice"
-}`}</CodeBlock>
-          </EndpointBlock>
+          <EndpointBlock method="PATCH" path="/numbers/:id" desc="Update number config" />
           <EndpointBlock method="DELETE" path="/numbers/:id" desc="Release a phone number" />
         </DocSection>
 
@@ -129,8 +111,8 @@ data: [DONE]`}</CodeBlock>
   "metadata": {}
 }`}</CodeBlock>
           </EndpointBlock>
-          <EndpointBlock method="GET" path="/calls" desc="List call history (supports ?limit=&offset= pagination)" />
-          <EndpointBlock method="GET" path="/calls/:id" desc="Get call details (status, duration, cost)" />
+          <EndpointBlock method="GET" path="/calls" desc="List call history" />
+          <EndpointBlock method="GET" path="/calls/:id" desc="Get call details" />
           <EndpointBlock method="GET" path="/calls/:id/transcript" desc="Get call transcript" />
           <EndpointBlock method="GET" path="/calls/:id/recording" desc="Get recording URL" />
         </DocSection>
@@ -143,64 +125,27 @@ data: [DONE]`}</CodeBlock>
   "body": "Hello from my agent!",
   "metadata": {}
 }`}</CodeBlock>
-            <CodeBlock title="Response 201">{`{
-  "success": true,
-  "data": {
-    "id": "msg_a1b2c3d4e5f6",
-    "from": "+14155551234",
-    "to": "+15551234567",
-    "direction": "outbound",
-    "body": "Hello from my agent!",
-    "status": "sent",
-    "cost_cents": 2,
-    "metadata": {},
-    "created_at": "2026-03-05T12:00:00Z"
-  }
-}`}</CodeBlock>
           </EndpointBlock>
-          <EndpointBlock method="GET" path="/sms" desc="List SMS messages (supports ?number_id=&direction=&limit=&offset=)" />
+          <EndpointBlock method="GET" path="/sms" desc="List SMS messages" />
           <EndpointBlock method="GET" path="/sms/:id" desc="Get a single SMS message" />
         </DocSection>
 
         <DocSection title="Credits API">
-          <EndpointBlock method="GET" path="/credits/balance" desc="Check your credit balance">
-            <CodeBlock title="Response">{`{
-  "success": true,
-  "data": {
-    "balance_cents": 1500,
-    "balance_dollars": "15.00"
-  }
-}`}</CodeBlock>
-          </EndpointBlock>
-          <EndpointBlock method="POST" path="/credits/purchase" desc="Purchase credits (x402 USDC payment — $10.00 per pack)" />
+          <EndpointBlock method="GET" path="/credits/balance" desc="Check your credit balance" />
+          <EndpointBlock method="POST" path="/credits/purchase" desc="Purchase credits ($10.00 per pack)" />
         </DocSection>
 
         <DocSection title="Webhooks API">
-          <p className="text-sm text-muted mb-3">Register webhooks to receive events. Payloads are HMAC-signed with your secret.</p>
-          <EndpointBlock method="POST" path="/webhooks" desc="Register a webhook">
-            <CodeBlock title="Request body">{`{
-  "url": "https://your-server.com/hooks",
-  "events": ["call.ended", "call.transcript.ready", "call.recording.ready"]
-}`}</CodeBlock>
-            <CodeBlock title="Response (secret shown once)">{`{
-  "success": true,
-  "data": {
-    "id": "wh_abc123",
-    "url": "https://your-server.com/hooks",
-    "events": ["call.ended", "call.transcript.ready", "call.recording.ready"],
-    "secret": "whsec_...",
-    "active": true
-  }
-}`}</CodeBlock>
-          </EndpointBlock>
+          <p className="text-sm text-muted mb-3">Register webhooks to receive events. Payloads are HMAC-signed.</p>
+          <EndpointBlock method="POST" path="/webhooks" desc="Register a webhook" />
           <EndpointBlock method="GET" path="/webhooks" desc="List webhooks" />
-          <EndpointBlock method="PATCH" path="/webhooks/:id" desc="Update webhook (url, events, active)" />
+          <EndpointBlock method="PATCH" path="/webhooks/:id" desc="Update webhook" />
           <EndpointBlock method="DELETE" path="/webhooks/:id" desc="Delete a webhook" />
           <div className="mt-4">
-            <p className="text-xs text-muted mb-2">Available events:</p>
+            <p className="text-[10px] text-muted mb-2 uppercase tracking-widest">Available Events:</p>
             <div className="flex flex-wrap gap-2">
               {["call.started", "call.ended", "call.transcript.ready", "call.recording.ready", "sms.sent", "sms.received"].map(e => (
-                <code key={e} className="text-xs bg-zinc-800 text-accent px-2 py-1 rounded">{e}</code>
+                <code key={e} className="text-[10px] border border-border text-accent px-2 py-1">{e}</code>
               ))}
             </div>
           </div>
@@ -210,7 +155,7 @@ data: [DONE]`}</CodeBlock>
           <CodeBlock title="Error response">{`{
   "success": false,
   "error": {
-    "message": "Insufficient credits. Need 500 cents, have 0 cents.",
+    "message": "Insufficient credits.",
     "code": "insufficient_credits"
   }
 }`}</CodeBlock>
@@ -224,8 +169,8 @@ data: [DONE]`}</CodeBlock>
         </DocSection>
       </section>
 
-      <footer className="border-t border-border py-8 text-center text-sm text-muted">
-        AgentNumber &copy; {new Date().getFullYear()}
+      <footer className="border-t-3 border-border py-6 text-center text-[10px] text-muted uppercase tracking-widest">
+        AGENT[NUMBER] &copy; {new Date().getFullYear()}
       </footer>
     </div>
   );
@@ -233,8 +178,8 @@ data: [DONE]`}</CodeBlock>
 
 function DocSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="mb-12 border-b border-border pb-10 last:border-0">
-      <h3 className="text-xl font-bold mb-4">{title}</h3>
+    <div className="mb-12 border-b-3 border-border pb-10 last:border-0">
+      <h3 className="text-lg font-bold mb-4 uppercase tracking-wider">{title}</h3>
       {children}
     </div>
   );
@@ -242,25 +187,25 @@ function DocSection({ title, children }: { title: string; children: React.ReactN
 
 function CodeBlock({ title, children }: { title?: string; children: string }) {
   return (
-    <div className="rounded-xl bg-zinc-900/80 border border-border overflow-hidden my-3">
-      {title && <div className="px-4 py-2 border-b border-border text-xs text-muted">{title}</div>}
-      <pre className="p-4 text-sm text-green-400 overflow-x-auto whitespace-pre">{children}</pre>
+    <div className="border-3 border-border overflow-hidden my-3">
+      {title && <div className="px-4 py-2 border-b border-border text-[10px] text-muted uppercase tracking-widest">{title}</div>}
+      <pre className="p-4 text-sm text-accent overflow-x-auto whitespace-pre bg-black">{children}</pre>
     </div>
   );
 }
 
 function EndpointBlock({ method, path, desc, children }: { method: string; path: string; desc: string; children?: React.ReactNode }) {
   const methodColor: Record<string, string> = {
-    GET: "bg-blue-500/20 text-blue-400",
-    POST: "bg-green-500/20 text-green-400",
-    PATCH: "bg-yellow-500/20 text-yellow-400",
-    DELETE: "bg-red-500/20 text-red-400",
+    GET: "border-foreground text-foreground",
+    POST: "border-accent text-accent",
+    PATCH: "border-foreground text-foreground",
+    DELETE: "border-accent text-accent",
   };
   return (
     <div className="my-4">
       <div className="flex items-center gap-3 mb-1">
-        <span className={`text-xs font-bold px-2 py-0.5 rounded ${methodColor[method] || "bg-zinc-500/20 text-zinc-400"}`}>{method}</span>
-        <code className="text-sm font-mono text-foreground">{path}</code>
+        <span className={`text-[10px] font-bold px-2 py-0.5 border-2 uppercase tracking-wider ${methodColor[method] || "border-muted text-muted"}`}>{method}</span>
+        <code className="text-sm text-foreground">{path}</code>
       </div>
       <p className="text-sm text-muted ml-14 mb-2">{desc}</p>
       {children && <div className="ml-14">{children}</div>}
@@ -271,8 +216,10 @@ function EndpointBlock({ method, path, desc, children }: { method: string; path:
 function StepLabel({ n, text }: { n: number; text: string }) {
   return (
     <div className="flex items-center gap-3">
-      <div className="w-6 h-6 rounded-full bg-accent/20 text-accent text-xs font-bold flex items-center justify-center shrink-0">{n}</div>
-      <span className="font-medium">{text}</span>
+      <div className="w-6 h-6 border-2 border-accent text-accent text-xs font-bold flex items-center justify-center">
+        {n}
+      </div>
+      <span className="font-bold uppercase tracking-wider">{text}</span>
     </div>
   );
 }

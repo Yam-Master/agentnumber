@@ -49,73 +49,60 @@ export default function CreateAgentPage() {
   return (
     <div className="max-w-xl mx-auto">
       <div className="flex items-center gap-4 mb-8">
-        <Link
-          href="/dashboard"
-          className="text-muted hover:text-foreground transition-colors"
-        >
+        <Link href="/dashboard" className="text-muted hover:text-accent transition-colors text-xs uppercase tracking-widest">
           &larr; Back
         </Link>
-        <h1 className="text-2xl font-bold">Create Agent</h1>
+        <h1 className="text-xl font-bold uppercase tracking-wider">Create Agent</h1>
       </div>
 
-      <form
-        onSubmit={handleCreate}
-        className="rounded-2xl border border-border bg-zinc-900/50 p-8 space-y-5"
-      >
+      <form onSubmit={handleCreate} className="border-3 border-border p-8 space-y-5">
         <div>
-          <label className="block text-sm text-muted mb-1.5">Agent Name</label>
+          <label className="block text-[10px] text-muted mb-1.5 uppercase tracking-widest">Agent Name</label>
           <input
             type="text"
-            placeholder="My Support Agent"
+            placeholder="MY SUPPORT AGENT"
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
-            className="w-full bg-zinc-800 border border-border rounded-lg px-4 py-2.5 text-foreground placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-accent"
+            className="w-full bg-transparent border-3 border-border px-4 py-3 text-foreground placeholder:text-muted text-sm focus:outline-none focus:border-accent uppercase tracking-wider"
           />
         </div>
 
         <div>
-          <label className="block text-sm text-muted mb-1.5">
-            System Prompt
-          </label>
+          <label className="block text-[10px] text-muted mb-1.5 uppercase tracking-widest">System Prompt</label>
           <textarea
             placeholder="You are a helpful customer support agent for..."
             value={systemPrompt}
             onChange={(e) => setSystemPrompt(e.target.value)}
             required
             rows={5}
-            className="w-full bg-zinc-800 border border-border rounded-lg px-4 py-2.5 text-foreground placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-accent resize-none"
+            className="w-full bg-transparent border-3 border-border px-4 py-3 text-foreground placeholder:text-muted text-sm focus:outline-none focus:border-accent resize-none"
           />
         </div>
 
         <div>
-          <label className="block text-sm text-muted mb-1.5">
-            First Message
-          </label>
+          <label className="block text-[10px] text-muted mb-1.5 uppercase tracking-widest">First Message</label>
           <input
             type="text"
             placeholder="Hi there! How can I help you today?"
             value={firstMessage}
             onChange={(e) => setFirstMessage(e.target.value)}
-            className="w-full bg-zinc-800 border border-border rounded-lg px-4 py-2.5 text-foreground placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-accent"
+            className="w-full bg-transparent border-3 border-border px-4 py-3 text-foreground placeholder:text-muted text-sm focus:outline-none focus:border-accent"
           />
-          <p className="text-xs text-muted mt-1">
-            What the agent says when it picks up. Leave empty to wait for the
-            caller.
+          <p className="text-[10px] text-muted mt-1 uppercase tracking-wider">
+            What the agent says when it picks up
           </p>
         </div>
 
         <div>
-          <label className="block text-sm text-muted mb-1.5">Voice</label>
+          <label className="block text-[10px] text-muted mb-1.5 uppercase tracking-widest">Voice</label>
           <select
             value={voiceId}
             onChange={(e) => setVoiceId(e.target.value)}
-            className="w-full bg-zinc-800 border border-border rounded-lg px-4 py-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
+            className="w-full bg-black border-3 border-border px-4 py-3 text-foreground text-sm focus:outline-none focus:border-accent"
           >
             {voices.map((v) => (
-              <option key={v.id} value={v.id}>
-                {v.name}
-              </option>
+              <option key={v.id} value={v.id}>{v.name}</option>
             ))}
           </select>
         </div>
@@ -123,13 +110,13 @@ export default function CreateAgentPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-accent hover:bg-accent-light disabled:opacity-50 text-white font-medium py-3 rounded-lg transition-colors"
+          className="w-full bg-accent hover:bg-accent-dim disabled:opacity-50 text-white font-bold py-3 uppercase tracking-widest text-sm transition-colors"
         >
-          {loading ? "Creating agent..." : "Create Agent"}
+          {loading ? "Creating..." : "Create Agent"}
         </button>
 
         {error && (
-          <p className="text-red-400 text-sm text-center">{error}</p>
+          <p className="text-accent text-sm text-center">{error}</p>
         )}
       </form>
     </div>

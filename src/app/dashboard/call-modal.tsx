@@ -11,9 +11,7 @@ export function CallModal({
 }) {
   const [open, setOpen] = useState(false);
   const [phone, setPhone] = useState("");
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">(
-    "idle"
-  );
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
 
   async function handleCall() {
@@ -49,19 +47,19 @@ export function CallModal({
     <>
       <button
         onClick={() => setOpen(true)}
-        className="text-sm text-accent-light hover:text-foreground px-3 py-1.5 border border-accent/30 rounded-lg transition-colors"
+        className="text-xs text-accent hover:underline px-3 py-1.5 border-2 border-accent uppercase tracking-widest font-bold transition-colors"
       >
-        Call someone
+        Call
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="bg-zinc-900 border border-border rounded-2xl p-6 w-full max-w-sm mx-4">
-            <h3 className="font-semibold text-lg mb-1">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
+          <div className="bg-background border-3 border-border p-6 w-full max-w-sm mx-4">
+            <h3 className="font-bold text-sm uppercase tracking-widest mb-1">
               Call with {agentName}
             </h3>
-            <p className="text-muted text-sm mb-4">
-              Enter a phone number for your agent to call.
+            <p className="text-muted text-[10px] mb-4 uppercase tracking-wider">
+              Enter phone number for agent to call
             </p>
 
             <input
@@ -69,7 +67,7 @@ export function CallModal({
               placeholder="+1 (555) 123-4567"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="w-full bg-zinc-800 border border-border rounded-lg px-4 py-2.5 text-foreground placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-accent mb-3"
+              className="w-full bg-transparent border-3 border-border px-4 py-3 text-foreground placeholder:text-muted text-sm focus:outline-none focus:border-accent mb-3"
             />
 
             <div className="flex gap-2">
@@ -79,28 +77,24 @@ export function CallModal({
                   setStatus("idle");
                   setPhone("");
                 }}
-                className="flex-1 border border-border text-muted hover:text-foreground py-2.5 rounded-lg transition-colors"
+                className="flex-1 border-3 border-border text-muted hover:text-foreground py-2.5 uppercase tracking-widest text-xs font-bold transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleCall}
                 disabled={status === "loading" || !phone.trim()}
-                className="flex-1 bg-accent hover:bg-accent-light disabled:opacity-50 text-white font-medium py-2.5 rounded-lg transition-colors"
+                className="flex-1 bg-accent hover:bg-accent-dim disabled:opacity-50 text-white font-bold py-2.5 uppercase tracking-widest text-xs transition-colors"
               >
                 {status === "loading" ? "Calling..." : "Call"}
               </button>
             </div>
 
             {status === "success" && (
-              <p className="text-green-400 text-sm text-center mt-3">
-                Call initiated!
-              </p>
+              <p className="text-foreground text-xs text-center mt-3 uppercase tracking-widest font-bold">Call initiated</p>
             )}
             {status === "error" && (
-              <p className="text-red-400 text-sm text-center mt-3">
-                {errorMsg}
-              </p>
+              <p className="text-accent text-xs text-center mt-3">{errorMsg}</p>
             )}
           </div>
         </div>
