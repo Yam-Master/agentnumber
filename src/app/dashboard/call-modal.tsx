@@ -58,7 +58,7 @@ export function CallModal({
             <h3 className="font-bold text-sm uppercase tracking-widest mb-1">
               Call with {agentName}
             </h3>
-            <p className="text-muted text-[10px] mb-4 uppercase tracking-wider">
+            <p className="text-foreground text-xs mb-4 uppercase tracking-wider">
               Enter phone number for agent to call
             </p>
 
@@ -67,7 +67,7 @@ export function CallModal({
               placeholder="+1 (555) 123-4567"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="w-full bg-transparent border-3 border-border px-4 py-3 text-foreground placeholder:text-muted text-sm focus:outline-none focus:border-accent mb-3"
+              className="w-full bg-transparent border-3 border-border px-4 py-3 text-foreground placeholder:text-foreground/40 text-sm focus:outline-none focus:border-accent mb-3"
             />
 
             <div className="flex gap-2">
@@ -77,7 +77,7 @@ export function CallModal({
                   setStatus("idle");
                   setPhone("");
                 }}
-                className="flex-1 border-3 border-border text-muted hover:text-foreground py-2.5 uppercase tracking-widest text-xs font-bold transition-colors"
+                className="flex-1 border-3 border-border text-foreground hover:text-foreground py-2.5 uppercase tracking-widest text-xs font-bold transition-colors"
               >
                 Cancel
               </button>

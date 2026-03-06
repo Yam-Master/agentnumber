@@ -49,13 +49,13 @@ export default function ApiKeysPage() {
   };
 
   if (loading) {
-    return <div className="text-muted text-xs uppercase tracking-widest">Loading...</div>;
+    return <div className="text-foreground text-xs uppercase tracking-widest">Loading...</div>;
   }
 
   return (
     <div className="space-y-8">
       <div>
-        <p className="text-xs text-muted uppercase tracking-widest mb-2">Dashboard // API Keys</p>
+        <p className="text-xs text-foreground uppercase tracking-widest mb-2">Dashboard // API Keys</p>
         <h1 className="text-xl font-bold uppercase tracking-wider">API Keys</h1>
       </div>
 
@@ -67,7 +67,7 @@ export default function ApiKeysPage() {
             value={newKeyName}
             onChange={(e) => setNewKeyName(e.target.value)}
             placeholder="KEY NAME (OPTIONAL)"
-            className="flex-1 bg-transparent border-3 border-border px-3 py-2 text-sm focus:outline-none focus:border-accent placeholder:text-muted uppercase tracking-wider"
+            className="flex-1 bg-transparent border-3 border-border px-3 py-2 text-sm focus:outline-none focus:border-accent placeholder:text-foreground/40 uppercase tracking-wider"
           />
           <button
             onClick={createKey}
@@ -102,17 +102,17 @@ export default function ApiKeysPage() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b-3 border-border">
-              <th className="text-left px-4 py-3 text-[10px] font-bold text-muted uppercase tracking-widest">Name</th>
-              <th className="text-left px-4 py-3 text-[10px] font-bold text-muted uppercase tracking-widest">Key</th>
-              <th className="text-left px-4 py-3 text-[10px] font-bold text-muted uppercase tracking-widest">Created</th>
-              <th className="text-left px-4 py-3 text-[10px] font-bold text-muted uppercase tracking-widest">Status</th>
-              <th className="text-right px-4 py-3 text-[10px] font-bold text-muted uppercase tracking-widest">Actions</th>
+              <th className="text-left px-4 py-3 text-xs font-bold text-foreground uppercase tracking-widest">Name</th>
+              <th className="text-left px-4 py-3 text-xs font-bold text-foreground uppercase tracking-widest">Key</th>
+              <th className="text-left px-4 py-3 text-xs font-bold text-foreground uppercase tracking-widest">Created</th>
+              <th className="text-left px-4 py-3 text-xs font-bold text-foreground uppercase tracking-widest">Status</th>
+              <th className="text-right px-4 py-3 text-xs font-bold text-foreground uppercase tracking-widest">Actions</th>
             </tr>
           </thead>
           <tbody>
             {keys.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-muted text-xs uppercase tracking-widest">
+                <td colSpan={5} className="px-4 py-8 text-center text-foreground text-xs uppercase tracking-widest">
                   No keys yet
                 </td>
               </tr>
@@ -120,11 +120,11 @@ export default function ApiKeysPage() {
               keys.map((k) => (
                 <tr key={k.id} className="border-b border-border last:border-0">
                   <td className="px-4 py-3 font-bold">{k.name}</td>
-                  <td className="px-4 py-3 text-muted">{k.key_prefix}...</td>
-                  <td className="px-4 py-3 text-muted">{new Date(k.created_at).toLocaleDateString()}</td>
+                  <td className="px-4 py-3 text-foreground">{k.key_prefix}...</td>
+                  <td className="px-4 py-3 text-foreground">{new Date(k.created_at).toLocaleDateString()}</td>
                   <td className="px-4 py-3">
                     {k.revoked_at ? (
-                      <span className="text-muted uppercase text-xs">Revoked</span>
+                      <span className="text-foreground uppercase text-xs">Revoked</span>
                     ) : (
                       <span className="text-accent uppercase text-xs font-bold">Active</span>
                     )}

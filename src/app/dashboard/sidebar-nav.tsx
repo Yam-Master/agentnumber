@@ -36,7 +36,7 @@ export function SidebarNav({ email }: { email: string }) {
               className={`flex items-center px-5 py-2.5 text-xs font-bold uppercase tracking-widest transition-colors border-l-3 ${
                 active
                   ? "border-accent text-accent bg-accent/5"
-                  : "border-transparent text-muted hover:text-foreground hover:border-border"
+                  : "border-transparent text-foreground hover:text-foreground hover:border-border"
               }`}
             >
               {item.label}
@@ -47,10 +47,10 @@ export function SidebarNav({ email }: { email: string }) {
 
       <div className="px-5 py-4 border-t-3 border-border space-y-3">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 border-2 border-accent text-accent text-[10px] font-bold flex items-center justify-center uppercase">
+          <div className="w-6 h-6 border-2 border-accent text-accent text-xs font-bold flex items-center justify-center uppercase">
             {email[0]}
           </div>
-          <span className="text-[10px] text-muted truncate uppercase tracking-wider">{email}</span>
+          <span className="text-xs text-foreground truncate uppercase tracking-wider">{email}</span>
         </div>
         <LogoutButton />
       </div>

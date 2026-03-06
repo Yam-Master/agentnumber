@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { generateApiKey } from "@/lib/auth/api-key";
 
+const DEV_MOCK = process.env.NODE_ENV === "development";
+
 async function getOrgId(): Promise<string | null> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -18,13 +20,23 @@ async function getOrgId(): Promise<string | null> {
 }
 
 export async function POST(request: NextRequest) {
+  const body = await request.json();
+  const { name = "Default" } = body;
+
+  if (DEV_MOCK) {
+    return NextResponse.json({
+      id: "mock-key-id",
+      name,
+      key_prefix: "an_live_mock",
+      created_at: new Date().toISOString(),
+      key: "an_live_mock_k7x9f2m4p8q1w3r6t0y5",
+    }, { status: 201 });
+  }
+
   const orgId = await getOrgId();
   if (!orgId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-
-  const body = await request.json();
-  const { name = "Default" } = body;
 
   const { key, prefix, hash } = generateApiKey();
   const supabase = createServiceClient();
@@ -50,6 +62,10 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET() {
+  if (DEV_MOCK) {
+    return NextResponse.json({ data: [] });
+  }
+
   const orgId = await getOrgId();
   if (!orgId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

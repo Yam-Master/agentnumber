@@ -8,8 +8,8 @@ export default function DocsPage() {
           AGENT<span className="text-accent">[NUMBER]</span>
         </Link>
         <div className="flex gap-6 items-center">
-          <Link href="/login" className="text-[10px] text-muted hover:text-foreground transition-colors uppercase tracking-widest">Log In</Link>
-          <Link href="/signup" className="bg-accent text-white px-4 py-2 text-[10px] font-bold uppercase tracking-widest hover:bg-accent-dim transition-colors">
+          <Link href="/login" className="text-xs text-foreground hover:text-foreground transition-colors uppercase tracking-widest">Log In</Link>
+          <Link href="/signup" className="bg-accent text-white px-4 py-2 text-xs font-bold uppercase tracking-widest hover:bg-accent-dim transition-colors">
             Get Started
           </Link>
         </div>
@@ -17,34 +17,34 @@ export default function DocsPage() {
 
       <section className="max-w-4xl mx-auto px-6 py-16">
         <h2 className="text-2xl font-bold uppercase tracking-wider mb-2">API Documentation</h2>
-        <p className="text-sm text-muted mb-10 uppercase tracking-wider">
+        <p className="text-sm text-foreground mb-10 uppercase tracking-wider">
           Base URL: <code className="text-accent">https://agentnumber.com/api/v0</code>
         </p>
 
         <DocSection title="Authentication">
-          <p className="text-sm text-muted mb-3">
+          <p className="text-sm text-foreground mb-3">
             All API requests require a Bearer token. Get your API key from the dashboard after signing up.
           </p>
           <CodeBlock>{`Authorization: Bearer an_live_<your_key>`}</CodeBlock>
         </DocSection>
 
         <DocSection title="Quick Start">
-          <p className="text-sm text-muted mb-4">Three steps to give your agent a phone number:</p>
+          <p className="text-sm text-foreground mb-4">Three steps to give your agent a phone number:</p>
           <ol className="space-y-6 text-sm">
             <li>
               <StepLabel n={1} text="Sign up and create an API key" />
-              <p className="text-muted mt-1 ml-8">Sign up at <code className="text-accent">/signup</code>, then create an API key in the dashboard.</p>
+              <p className="text-foreground mt-1 ml-8">Sign up at <code className="text-accent">/signup</code>, then create an API key in the dashboard.</p>
             </li>
             <li>
               <StepLabel n={2} text="Add credits" />
               <CodeBlock title="POST /credits/purchase">{`{
   "amount_cents": 1000
 }`}</CodeBlock>
-              <p className="text-muted mt-2 ml-8">$5 per number, $0.05/min outbound, $0.03/min inbound.</p>
+              <p className="text-foreground mt-2 ml-8">$5 per number, $0.05/min outbound, $0.03/min inbound.</p>
             </li>
             <li>
               <StepLabel n={3} text="Provision a phone number" />
-              <p className="text-muted mt-2 ml-8 mb-3">
+              <p className="text-foreground mt-2 ml-8 mb-3">
                 <strong className="text-foreground">Option A: Managed mode</strong> — just provide a system prompt, no server needed:
               </p>
               <CodeBlock title="POST /numbers (managed)">{`{
@@ -52,7 +52,7 @@ export default function DocsPage() {
   "first_message": "Hello, how can I help you?",
   "area_code": "415"
 }`}</CodeBlock>
-              <p className="text-muted mt-4 ml-8 mb-3">
+              <p className="text-foreground mt-4 ml-8 mb-3">
                 <strong className="text-foreground">Option B: Webhook mode</strong> — route calls to your own server for full control:
               </p>
               <CodeBlock title="POST /numbers (webhook)">{`{
@@ -64,7 +64,7 @@ export default function DocsPage() {
         </DocSection>
 
         <DocSection title="Webhook Format">
-          <p className="text-sm text-muted mb-3">
+          <p className="text-sm text-foreground mb-3">
             Your <code className="text-accent">webhook_url</code> receives POST requests in OpenAI-compatible chat completions format:
           </p>
           <CodeBlock title="POST to your webhook_url">{`{
@@ -75,7 +75,7 @@ export default function DocsPage() {
   ],
   "stream": true
 }`}</CodeBlock>
-          <p className="text-sm text-muted mt-3">
+          <p className="text-sm text-foreground mt-3">
             Respond with SSE-streamed chat completion chunks. The text is spoken back via TTS.
           </p>
           <CodeBlock title="Your response (SSE stream)">{`data: {"choices":[{"delta":{"content":"Sure, I can"}}]}
@@ -136,16 +136,16 @@ data: [DONE]`}</CodeBlock>
         </DocSection>
 
         <DocSection title="Webhooks API">
-          <p className="text-sm text-muted mb-3">Register webhooks to receive events. Payloads are HMAC-signed.</p>
+          <p className="text-sm text-foreground mb-3">Register webhooks to receive events. Payloads are HMAC-signed.</p>
           <EndpointBlock method="POST" path="/webhooks" desc="Register a webhook" />
           <EndpointBlock method="GET" path="/webhooks" desc="List webhooks" />
           <EndpointBlock method="PATCH" path="/webhooks/:id" desc="Update webhook" />
           <EndpointBlock method="DELETE" path="/webhooks/:id" desc="Delete a webhook" />
           <div className="mt-4">
-            <p className="text-[10px] text-muted mb-2 uppercase tracking-widest">Available Events:</p>
+            <p className="text-xs text-foreground mb-2 uppercase tracking-widest">Available Events:</p>
             <div className="flex flex-wrap gap-2">
               {["call.started", "call.ended", "call.transcript.ready", "call.recording.ready", "sms.sent", "sms.received"].map(e => (
-                <code key={e} className="text-[10px] border border-border text-accent px-2 py-1">{e}</code>
+                <code key={e} className="text-xs border border-border text-accent px-2 py-1">{e}</code>
               ))}
             </div>
           </div>
@@ -159,7 +159,7 @@ data: [DONE]`}</CodeBlock>
     "code": "insufficient_credits"
   }
 }`}</CodeBlock>
-          <div className="mt-3 space-y-1 text-xs text-muted">
+          <div className="mt-3 space-y-1 text-xs text-foreground">
             <p><code className="text-foreground">401</code> — Invalid or missing API key</p>
             <p><code className="text-foreground">400</code> — Validation error</p>
             <p><code className="text-foreground">402</code> — Insufficient credits</p>
@@ -169,7 +169,7 @@ data: [DONE]`}</CodeBlock>
         </DocSection>
       </section>
 
-      <footer className="border-t-3 border-border py-6 text-center text-[10px] text-muted uppercase tracking-widest">
+      <footer className="border-t-3 border-border py-6 text-center text-xs text-foreground uppercase tracking-widest">
         AGENT[NUMBER] &copy; {new Date().getFullYear()}
       </footer>
     </div>
@@ -188,7 +188,7 @@ function DocSection({ title, children }: { title: string; children: React.ReactN
 function CodeBlock({ title, children }: { title?: string; children: string }) {
   return (
     <div className="border-3 border-border overflow-hidden my-3">
-      {title && <div className="px-4 py-2 border-b border-border text-[10px] text-muted uppercase tracking-widest">{title}</div>}
+      {title && <div className="px-4 py-2 border-b border-border text-xs text-foreground uppercase tracking-widest">{title}</div>}
       <pre className="p-4 text-sm text-accent overflow-x-auto whitespace-pre bg-black">{children}</pre>
     </div>
   );
@@ -204,10 +204,10 @@ function EndpointBlock({ method, path, desc, children }: { method: string; path:
   return (
     <div className="my-4">
       <div className="flex items-center gap-3 mb-1">
-        <span className={`text-[10px] font-bold px-2 py-0.5 border-2 uppercase tracking-wider ${methodColor[method] || "border-muted text-muted"}`}>{method}</span>
+        <span className={`text-xs font-bold px-2 py-0.5 border-2 uppercase tracking-wider ${methodColor[method] || "border-muted text-foreground"}`}>{method}</span>
         <code className="text-sm text-foreground">{path}</code>
       </div>
-      <p className="text-sm text-muted ml-14 mb-2">{desc}</p>
+      <p className="text-sm text-foreground ml-14 mb-2">{desc}</p>
       {children && <div className="ml-14">{children}</div>}
     </div>
   );

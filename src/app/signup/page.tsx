@@ -64,7 +64,7 @@ export default function SignupPage() {
 
           <div className="flex items-center gap-3 my-4">
             <div className="flex-1 h-px bg-border" />
-            <span className="text-xs text-muted uppercase tracking-widest">or</span>
+            <span className="text-xs text-foreground uppercase tracking-widest">or</span>
             <div className="flex-1 h-px bg-border" />
           </div>
 
@@ -75,7 +75,7 @@ export default function SignupPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full bg-transparent border-3 border-border px-4 py-3 text-foreground placeholder:text-muted text-sm uppercase tracking-wider focus:outline-none focus:border-accent"
+              className="w-full bg-transparent border-3 border-border px-4 py-3 text-foreground placeholder:text-foreground/40 text-sm uppercase tracking-wider focus:outline-none focus:border-accent"
             />
             <input
               type="password"
@@ -84,7 +84,7 @@ export default function SignupPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
-              className="w-full bg-transparent border-3 border-border px-4 py-3 text-foreground placeholder:text-muted text-sm uppercase tracking-wider focus:outline-none focus:border-accent"
+              className="w-full bg-transparent border-3 border-border px-4 py-3 text-foreground placeholder:text-foreground/40 text-sm uppercase tracking-wider focus:outline-none focus:border-accent"
             />
             <button
               type="submit"
@@ -99,7 +99,7 @@ export default function SignupPage() {
             <p className="text-accent text-sm text-center mt-3">{error}</p>
           )}
 
-          <p className="text-sm text-muted text-center mt-6 uppercase tracking-wider">
+          <p className="text-sm text-foreground text-center mt-6 uppercase tracking-wider">
             Have an account?{" "}
             <Link href="/login" className="text-accent hover:underline">
               Log in

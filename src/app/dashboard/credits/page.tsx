@@ -40,22 +40,22 @@ export default function CreditsPage() {
   }, [fetchData]);
 
   if (loading) {
-    return <div className="text-muted text-xs uppercase tracking-widest">Loading...</div>;
+    return <div className="text-foreground text-xs uppercase tracking-widest">Loading...</div>;
   }
 
   return (
     <div className="space-y-8">
       <div>
-        <p className="text-xs text-muted uppercase tracking-widest mb-2">Dashboard // Credits</p>
+        <p className="text-xs text-foreground uppercase tracking-widest mb-2">Dashboard // Credits</p>
         <h1 className="text-xl font-bold uppercase tracking-wider">Credits</h1>
       </div>
 
       <div className="border-3 border-border p-6">
-        <span className="text-[10px] text-muted uppercase tracking-widest">Current Balance</span>
+        <span className="text-xs text-foreground uppercase tracking-widest">Current Balance</span>
         <p className="text-4xl font-bold text-accent mt-1">
           ${balance !== null ? (balance / 100).toFixed(2) : "---"}
         </p>
-        <p className="text-xs text-muted mt-1 uppercase tracking-wider">
+        <p className="text-xs text-foreground mt-1 uppercase tracking-wider">
           {balance !== null ? `${balance} cents` : ""}
         </p>
       </div>
@@ -67,30 +67,30 @@ export default function CreditsPage() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border">
-              <th className="text-left px-4 py-3 text-[10px] font-bold text-muted uppercase tracking-widest">Date</th>
-              <th className="text-left px-4 py-3 text-[10px] font-bold text-muted uppercase tracking-widest">Description</th>
-              <th className="text-right px-4 py-3 text-[10px] font-bold text-muted uppercase tracking-widest">Amount</th>
-              <th className="text-right px-4 py-3 text-[10px] font-bold text-muted uppercase tracking-widest">Balance</th>
+              <th className="text-left px-4 py-3 text-xs font-bold text-foreground uppercase tracking-widest">Date</th>
+              <th className="text-left px-4 py-3 text-xs font-bold text-foreground uppercase tracking-widest">Description</th>
+              <th className="text-right px-4 py-3 text-xs font-bold text-foreground uppercase tracking-widest">Amount</th>
+              <th className="text-right px-4 py-3 text-xs font-bold text-foreground uppercase tracking-widest">Balance</th>
             </tr>
           </thead>
           <tbody>
             {ledger.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-muted text-xs uppercase tracking-widest">
+                <td colSpan={4} className="px-4 py-8 text-center text-foreground text-xs uppercase tracking-widest">
                   No transactions yet
                 </td>
               </tr>
             ) : (
               ledger.map((entry) => (
                 <tr key={entry.id} className="border-b border-border last:border-0">
-                  <td className="px-4 py-3 text-muted text-xs">{new Date(entry.created_at).toLocaleString()}</td>
+                  <td className="px-4 py-3 text-foreground text-xs">{new Date(entry.created_at).toLocaleString()}</td>
                   <td className="px-4 py-3">{entry.description}</td>
                   <td className={`px-4 py-3 text-right font-bold ${
                     entry.type === "deposit" ? "text-foreground" : "text-accent"
                   }`}>
                     {entry.type === "deposit" ? "+" : "-"}${(entry.amount_cents / 100).toFixed(2)}
                   </td>
-                  <td className="px-4 py-3 text-right text-muted">
+                  <td className="px-4 py-3 text-right text-foreground">
                     ${(entry.balance_after_cents / 100).toFixed(2)}
                   </td>
                 </tr>

@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 
+const DEV_MOCK = process.env.NODE_ENV === "development";
+
 export async function GET() {
+  if (DEV_MOCK) {
+    return NextResponse.json({ balance_cents: 0 });
+  }
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {

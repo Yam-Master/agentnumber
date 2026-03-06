@@ -49,7 +49,7 @@ export default function CreateAgentPage() {
   return (
     <div className="max-w-xl mx-auto">
       <div className="flex items-center gap-4 mb-8">
-        <Link href="/dashboard" className="text-muted hover:text-accent transition-colors text-xs uppercase tracking-widest">
+        <Link href="/dashboard" className="text-foreground hover:text-accent transition-colors text-xs uppercase tracking-widest">
           &larr; Back
         </Link>
         <h1 className="text-xl font-bold uppercase tracking-wider">Create Agent</h1>
@@ -57,45 +57,45 @@ export default function CreateAgentPage() {
 
       <form onSubmit={handleCreate} className="border-3 border-border p-8 space-y-5">
         <div>
-          <label className="block text-[10px] text-muted mb-1.5 uppercase tracking-widest">Agent Name</label>
+          <label className="block text-[10px] text-foreground mb-1.5 uppercase tracking-widest">Agent Name</label>
           <input
             type="text"
             placeholder="MY SUPPORT AGENT"
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
-            className="w-full bg-transparent border-3 border-border px-4 py-3 text-foreground placeholder:text-muted text-sm focus:outline-none focus:border-accent uppercase tracking-wider"
+            className="w-full bg-transparent border-3 border-border px-4 py-3 text-foreground placeholder:text-foreground/40 text-sm focus:outline-none focus:border-accent uppercase tracking-wider"
           />
         </div>
 
         <div>
-          <label className="block text-[10px] text-muted mb-1.5 uppercase tracking-widest">System Prompt</label>
+          <label className="block text-[10px] text-foreground mb-1.5 uppercase tracking-widest">System Prompt</label>
           <textarea
             placeholder="You are a helpful customer support agent for..."
             value={systemPrompt}
             onChange={(e) => setSystemPrompt(e.target.value)}
             required
             rows={5}
-            className="w-full bg-transparent border-3 border-border px-4 py-3 text-foreground placeholder:text-muted text-sm focus:outline-none focus:border-accent resize-none"
+            className="w-full bg-transparent border-3 border-border px-4 py-3 text-foreground placeholder:text-foreground/40 text-sm focus:outline-none focus:border-accent resize-none"
           />
         </div>
 
         <div>
-          <label className="block text-[10px] text-muted mb-1.5 uppercase tracking-widest">First Message</label>
+          <label className="block text-[10px] text-foreground mb-1.5 uppercase tracking-widest">First Message</label>
           <input
             type="text"
             placeholder="Hi there! How can I help you today?"
             value={firstMessage}
             onChange={(e) => setFirstMessage(e.target.value)}
-            className="w-full bg-transparent border-3 border-border px-4 py-3 text-foreground placeholder:text-muted text-sm focus:outline-none focus:border-accent"
+            className="w-full bg-transparent border-3 border-border px-4 py-3 text-foreground placeholder:text-foreground/40 text-sm focus:outline-none focus:border-accent"
           />
-          <p className="text-[10px] text-muted mt-1 uppercase tracking-wider">
+          <p className="text-[10px] text-foreground mt-1 uppercase tracking-wider">
             What the agent says when it picks up
           </p>
         </div>
 
         <div>
-          <label className="block text-[10px] text-muted mb-1.5 uppercase tracking-widest">Voice</label>
+          <label className="block text-[10px] text-foreground mb-1.5 uppercase tracking-widest">Voice</label>
           <select
             value={voiceId}
             onChange={(e) => setVoiceId(e.target.value)}

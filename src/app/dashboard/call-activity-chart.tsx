@@ -17,7 +17,7 @@ export function CallActivityChart({ data }: { data: { label: string; count: numb
               className={`w-full transition-colors ${
                 d.count > 0
                   ? "bg-accent hover:bg-accent-dim"
-                  : "bg-border hover:bg-muted"
+                  : "bg-border hover:bg-foreground/20"
               }`}
               style={{
                 height: d.count > 0 ? `${Math.max(4, (d.count / max) * 100)}%` : "2px",
@@ -32,7 +32,7 @@ export function CallActivityChart({ data }: { data: { label: string; count: numb
         {data.map((d, i) => (
           <div key={i} className="flex-1 text-center">
             {i % labelInterval === 0 && (
-              <span className="text-[10px] text-muted whitespace-nowrap uppercase">{d.label}</span>
+              <span className="text-xs text-foreground whitespace-nowrap uppercase">{d.label}</span>
             )}
           </div>
         ))}

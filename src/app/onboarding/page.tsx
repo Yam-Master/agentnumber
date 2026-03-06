@@ -102,7 +102,7 @@ export default function OnboardingPage() {
         </Link>
         <button
           onClick={() => router.push("/dashboard")}
-          className="text-[10px] text-muted uppercase tracking-widest hover:text-foreground transition-colors"
+          className="text-xs text-foreground uppercase tracking-widest hover:text-foreground transition-colors"
         >
           Skip to Dashboard &rarr;
         </button>
@@ -113,12 +113,12 @@ export default function OnboardingPage() {
         {["01 // API KEY", "02 // CREDITS", "03 // NUMBER"].map((label, i) => (
           <div
             key={i}
-            className={`flex-1 py-3 px-6 text-[10px] font-bold uppercase tracking-widest border-r-3 border-border last:border-r-0 transition-colors ${
+            className={`flex-1 py-3 px-6 text-xs font-bold uppercase tracking-widest border-r-3 border-border last:border-r-0 transition-colors ${
               i === step
                 ? "bg-accent text-white"
                 : i < step
                   ? "bg-accent/10 text-accent"
-                  : "text-muted"
+                  : "text-foreground"
             }`}
           >
             {label}
@@ -182,20 +182,20 @@ function StepCreateKey({
   return (
     <div className="w-full max-w-lg">
       <h1 className="text-2xl font-bold uppercase tracking-wider mb-2">Create Your API Key</h1>
-      <p className="text-sm text-muted mb-8 uppercase tracking-wider">
+      <p className="text-sm text-foreground mb-8 uppercase tracking-wider">
         Your key authenticates all API requests
       </p>
 
       {!apiKey ? (
         <div className="border-3 border-border p-8 space-y-4">
           <div>
-            <label className="block text-[10px] text-muted mb-1.5 uppercase tracking-widest">Key Name</label>
+            <label className="block text-xs text-foreground mb-1.5 uppercase tracking-widest">Key Name</label>
             <input
               type="text"
               value={keyName}
               onChange={(e) => setKeyName(e.target.value)}
               placeholder="MY AGENT KEY"
-              className="w-full bg-transparent border-3 border-border px-4 py-3 text-foreground placeholder:text-muted text-sm focus:outline-none focus:border-accent uppercase tracking-wider"
+              className="w-full bg-transparent border-3 border-border px-4 py-3 text-foreground placeholder:text-foreground/40 text-sm focus:outline-none focus:border-accent uppercase tracking-wider"
             />
           </div>
           <button
@@ -210,7 +210,7 @@ function StepCreateKey({
       ) : (
         <div className="space-y-4">
           <div className="border-3 border-accent p-6">
-            <p className="text-[10px] text-accent font-bold uppercase tracking-widest mb-3">
+            <p className="text-xs text-accent font-bold uppercase tracking-widest mb-3">
               Your API Key — Save this now
             </p>
             <code className="block text-sm bg-black border-3 border-border px-4 py-3 break-all">
@@ -218,7 +218,7 @@ function StepCreateKey({
             </code>
             <button
               onClick={() => navigator.clipboard.writeText(apiKey)}
-              className="mt-3 text-[10px] text-accent hover:underline uppercase tracking-widest font-bold"
+              className="mt-3 text-xs text-accent hover:underline uppercase tracking-widest font-bold"
             >
               Copy to Clipboard
             </button>
@@ -242,7 +242,7 @@ function StepAddCredits({ apiKey, onNext }: { apiKey: string; onNext: () => void
   return (
     <div className="w-full max-w-lg">
       <h1 className="text-2xl font-bold uppercase tracking-wider mb-2">Add Credits</h1>
-      <p className="text-sm text-muted mb-8 uppercase tracking-wider">
+      <p className="text-sm text-foreground mb-8 uppercase tracking-wider">
         Fund your account to provision numbers
       </p>
 
@@ -252,7 +252,7 @@ function StepAddCredits({ apiKey, onNext }: { apiKey: string; onNext: () => void
           <h3 className="text-xs font-bold uppercase tracking-widest text-accent mb-4">
             Option A // Send USDC on Base
           </h3>
-          <p className="text-xs text-muted mb-3 uppercase tracking-wider">
+          <p className="text-xs text-foreground mb-3 uppercase tracking-wider">
             Send USDC to this address on Base L2:
           </p>
           <div className="bg-black border-3 border-border px-4 py-3 flex items-center justify-between gap-2">
@@ -263,18 +263,18 @@ function StepAddCredits({ apiKey, onNext }: { apiKey: string; onNext: () => void
                 setCopied(true);
                 setTimeout(() => setCopied(false), 2000);
               }}
-              className="text-[10px] text-accent uppercase tracking-widest font-bold shrink-0"
+              className="text-xs text-accent uppercase tracking-widest font-bold shrink-0"
             >
               {copied ? "Copied" : "Copy"}
             </button>
           </div>
           <div className="mt-4 space-y-1">
             <div className="flex justify-between text-xs">
-              <span className="text-muted uppercase tracking-wider">$5 USDC</span>
+              <span className="text-foreground uppercase tracking-wider">$5 USDC</span>
               <span className="font-bold">=500 credits</span>
             </div>
             <div className="flex justify-between text-xs">
-              <span className="text-muted uppercase tracking-wider">$10 USDC</span>
+              <span className="text-foreground uppercase tracking-wider">$10 USDC</span>
               <span className="font-bold">=1000 credits</span>
             </div>
           </div>
@@ -285,13 +285,13 @@ function StepAddCredits({ apiKey, onNext }: { apiKey: string; onNext: () => void
           <h3 className="text-xs font-bold uppercase tracking-widest text-accent mb-4">
             Option B // x402 Protocol
           </h3>
-          <p className="text-xs text-muted uppercase tracking-wider">
+          <p className="text-xs text-foreground uppercase tracking-wider">
             Credits are automatically deducted via x402 when you make API calls.
             No manual funding needed — your wallet pays per request.
           </p>
           {apiKey && (
             <div className="mt-3 bg-black border-3 border-border px-4 py-3">
-              <code className="text-[10px] text-muted">
+              <code className="text-xs text-foreground">
                 curl -H &quot;Authorization: Bearer {apiKey.slice(0, 20)}...&quot; \<br />
                 &nbsp;&nbsp;POST /api/v0/numbers
               </code>
@@ -306,7 +306,7 @@ function StepAddCredits({ apiKey, onNext }: { apiKey: string; onNext: () => void
           Next: Get a Number &rarr;
         </button>
 
-        <p className="text-[10px] text-muted text-center uppercase tracking-wider">
+        <p className="text-xs text-foreground text-center uppercase tracking-wider">
           You can add credits later from the dashboard
         </p>
       </div>
@@ -328,25 +328,25 @@ function StepProvisionNumber({
   return (
     <div className="w-full max-w-lg">
       <h1 className="text-2xl font-bold uppercase tracking-wider mb-2">Get Your Number</h1>
-      <p className="text-sm text-muted mb-8 uppercase tracking-wider">
+      <p className="text-sm text-foreground mb-8 uppercase tracking-wider">
         Provision a real US phone number for your agent
       </p>
 
       <div className="border-3 border-border p-8 space-y-5">
         <div>
-          <label className="block text-[10px] text-muted mb-1.5 uppercase tracking-widest">Area Code</label>
+          <label className="block text-xs text-foreground mb-1.5 uppercase tracking-widest">Area Code</label>
           <input
             type="text"
             value={areaCode}
             onChange={(e) => setAreaCode(e.target.value.replace(/\D/g, "").slice(0, 3))}
             placeholder="941"
             maxLength={3}
-            className="w-full bg-transparent border-3 border-border px-4 py-3 text-foreground placeholder:text-muted text-sm focus:outline-none focus:border-accent tracking-wider"
+            className="w-full bg-transparent border-3 border-border px-4 py-3 text-foreground placeholder:text-foreground/40 text-sm focus:outline-none focus:border-accent tracking-wider"
           />
         </div>
 
         <div>
-          <label className="block text-[10px] text-muted mb-1.5 uppercase tracking-widest">
+          <label className="block text-xs text-foreground mb-1.5 uppercase tracking-widest">
             System Prompt (What should your agent do?)
           </label>
           <textarea
@@ -354,17 +354,17 @@ function StepProvisionNumber({
             onChange={(e) => setSystemPrompt(e.target.value)}
             placeholder="You are a helpful AI assistant that answers customer questions about..."
             rows={4}
-            className="w-full bg-transparent border-3 border-border px-4 py-3 text-foreground placeholder:text-muted text-sm focus:outline-none focus:border-accent resize-none"
+            className="w-full bg-transparent border-3 border-border px-4 py-3 text-foreground placeholder:text-foreground/40 text-sm focus:outline-none focus:border-accent resize-none"
           />
         </div>
 
         <div className="border-t-3 border-border pt-4 space-y-1">
           <div className="flex justify-between text-xs">
-            <span className="text-muted uppercase tracking-wider">Number cost</span>
+            <span className="text-foreground uppercase tracking-wider">Number cost</span>
             <span className="font-bold text-accent">$5.00 USDC</span>
           </div>
           <div className="flex justify-between text-xs">
-            <span className="text-muted uppercase tracking-wider">Includes</span>
+            <span className="text-foreground uppercase tracking-wider">Includes</span>
             <span className="font-bold">SMS + Voice</span>
           </div>
         </div>
@@ -430,11 +430,11 @@ function StepSuccess({ phoneNumber, onDashboard }: { phoneNumber: string; onDash
         <div className="absolute bottom-0 left-0 w-8 h-8 border-t-3 border-r-3 border-accent" />
         <div className="absolute bottom-0 right-0 w-8 h-8 border-t-3 border-l-3 border-accent" />
 
-        <div className="text-[10px] text-accent font-bold uppercase tracking-widest mb-6">
+        <div className="text-xs text-accent font-bold uppercase tracking-widest mb-6">
           Number Provisioned Successfully
         </div>
 
-        <div className="text-xs text-muted uppercase tracking-widest mb-2">
+        <div className="text-xs text-foreground uppercase tracking-widest mb-2">
           Your Agent&apos;s Number
         </div>
 
@@ -451,12 +451,12 @@ function StepSuccess({ phoneNumber, onDashboard }: { phoneNumber: string; onDash
 
         <div className="mt-8 flex justify-center gap-4">
           <div className="text-center">
-            <div className="text-[10px] text-muted uppercase tracking-widest">SMS</div>
+            <div className="text-xs text-foreground uppercase tracking-widest">SMS</div>
             <div className="text-sm font-bold text-accent">$0.02</div>
           </div>
           <div className="w-px bg-border" />
           <div className="text-center">
-            <div className="text-[10px] text-muted uppercase tracking-widest">Voice</div>
+            <div className="text-xs text-foreground uppercase tracking-widest">Voice</div>
             <div className="text-sm font-bold text-accent">$0.05/min</div>
           </div>
         </div>
@@ -469,7 +469,7 @@ function StepSuccess({ phoneNumber, onDashboard }: { phoneNumber: string; onDash
         Go to Dashboard &rarr;
       </button>
 
-      <p className="text-[10px] text-muted mt-4 uppercase tracking-wider">
+      <p className="text-xs text-foreground mt-4 uppercase tracking-wider">
         You can manage your number from the dashboard
       </p>
     </div>

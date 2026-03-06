@@ -2,7 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { vapi } from "@/lib/vapi";
 
+const DEV_MOCK = process.env.NODE_ENV === "development";
+
 export async function POST(request: NextRequest) {
+  const { name, systemPrompt, firstMessage, voiceId, areaCode } = await request.json();
+
+  if (DEV_MOCK) {
+    const area = areaCode || "941";
+    return NextResponse.json({
+      agent: { id: "mock-agent-id", name: name || "My Agent" },
+      phoneNumber: `+1 (${area}) 555-0${Math.floor(100 + Math.random() * 900)}`,
+    });
+  }
+
   try {
     const supabase = await createClient();
     const {
@@ -12,8 +24,6 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    const { name, systemPrompt, firstMessage, voiceId } = await request.json();
 
     if (!name || !systemPrompt) {
       return NextResponse.json(
