@@ -77,9 +77,11 @@ export const POST = withApiAuth(async (request: NextRequest, ctx: ApiContext) =>
   // 3. Determine the LLM URL for Vapi
   // webhook_url = agent's own server (custom LLM mode)
   // system_prompt = AgentNumber's managed voice endpoint
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : "https://agentnumber.vercel.app";
+  const baseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    (process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : "https://agentnumber.vercel.app");
 
   const llmUrl = webhook_url || `${baseUrl}/api/v0/voice/${numberRecord.id}`;
 

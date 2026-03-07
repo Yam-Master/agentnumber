@@ -81,15 +81,31 @@ export async function POST(request: NextRequest) {
 
     const supabase = createServiceClient();
 
-    const { data: number } = await supabase
+    const { data: numberRows } = await supabase
       .from("numbers")
       .select("id, org_id, phone_number")
       .eq("phone_number", to)
       .eq("status", "active")
-      .single();
+      .order("created_at", { ascending: false })
+      .limit(1);
+
+    const number = numberRows?.[0];
 
     if (!number) {
       return new NextResponse(twimlEmpty(), { headers: { "Content-Type": "text/xml" } });
+    }
+
+    if (messageSid) {
+      const { data: existing } = await supabase
+        .from("sms_messages")
+        .select("id")
+        .eq("number_id", number.id)
+        .eq("twilio_sid", messageSid)
+        .limit(1);
+      if (existing && existing.length > 0) {
+        // Twilio retries webhooks on timeout/non-2xx. Make processing idempotent.
+        return new NextResponse(twimlEmpty(), { headers: { "Content-Type": "text/xml" } });
+      }
     }
 
     const { data: smsRecord } = await supabase
