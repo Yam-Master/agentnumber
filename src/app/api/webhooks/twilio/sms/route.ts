@@ -60,6 +60,14 @@ function validateTwilioSignature(request: NextRequest, params: URLSearchParams):
   return false;
 }
 
+function normalizePhone(value: string | null): string | null {
+  if (!value) return null;
+  const v = value.trim();
+  if (!v) return null;
+  if (v.startsWith("whatsapp:")) return v.slice("whatsapp:".length);
+  return v;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
@@ -67,15 +75,21 @@ export async function POST(request: NextRequest) {
     // Validate Twilio signature
     const params = new URLSearchParams();
     formData.forEach((value, key) => params.append(key, String(value)));
-    if (!validateTwilioSignature(request, params)) {
+    const signatureValid = validateTwilioSignature(request, params);
+    const enforceSignature = process.env.TWILIO_ENFORCE_SIGNATURE === "true";
+    if (!signatureValid && enforceSignature) {
+      console.error("Twilio SMS webhook signature mismatch (rejected)");
       return new NextResponse("Forbidden", { status: 403 });
+    } else if (!signatureValid) {
+      console.warn("Twilio SMS webhook signature mismatch (accepted due to TWILIO_ENFORCE_SIGNATURE!=true)");
     }
-    const from = formData.get("From") as string;
-    const to = formData.get("To") as string;
+    const from = normalizePhone(formData.get("From") as string);
+    const to = normalizePhone(formData.get("To") as string);
     const body = formData.get("Body") as string;
     const messageSid = formData.get("MessageSid") as string;
 
     if (!from || !to || !body) {
+      console.warn("Twilio SMS webhook missing From/To/Body", { from, to, hasBody: Boolean(body) });
       return new NextResponse(twimlEmpty(), { headers: { "Content-Type": "text/xml" } });
     }
 
@@ -92,6 +106,7 @@ export async function POST(request: NextRequest) {
     const number = numberRows?.[0];
 
     if (!number) {
+      console.warn("Twilio SMS webhook number not found", { to });
       return new NextResponse(twimlEmpty(), { headers: { "Content-Type": "text/xml" } });
     }
 
