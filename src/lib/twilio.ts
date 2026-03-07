@@ -25,13 +25,14 @@ export async function sendSms(
 }
 
 export async function findAvailableNumber(
-  areaCode: string
+  areaCode?: string
 ): Promise<string> {
-  const url = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_SID}/AvailablePhoneNumbers/US/Local.json?Limit=1&AreaCode=${areaCode}`;
+  // Default to toll-free (no 10DLC registration needed for SMS)
+  const url = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_SID}/AvailablePhoneNumbers/US/TollFree.json?Limit=1`;
   const res = await fetch(url, { headers: { Authorization: TWILIO_AUTH } });
   const data = await res.json();
   if (!data.available_phone_numbers?.length) {
-    throw new Error(`No numbers available for area code ${areaCode}`);
+    throw new Error("No toll-free numbers available");
   }
   return data.available_phone_numbers[0].phone_number;
 }
