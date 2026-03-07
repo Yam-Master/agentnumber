@@ -85,6 +85,16 @@ export const POST = withApiAuth(async (request: NextRequest, ctx: ApiContext) =>
 
   await debitCredits(ctx.orgId, SMS_COST_CENTS, "Outbound SMS", smsRecord.id, "sms");
 
+  // Mark most recent inbound from this customer as "replied"
+  await supabase
+    .from("sms_messages")
+    .update({ status: "replied" })
+    .eq("org_id", ctx.orgId)
+    .eq("number_id", number.id)
+    .eq("customer_number", to)
+    .eq("direction", "inbound")
+    .eq("status", "received");
+
   await deliverWebhooks(ctx.orgId, "sms.sent", {
     message_id: toPublicId("msg", smsRecord.id),
     from: number.phone_number,
@@ -100,6 +110,8 @@ export const GET = withApiAuth(async (request: NextRequest, ctx: ApiContext) => 
   const { searchParams } = new URL(request.url);
   const numberId = searchParams.get("number_id");
   const direction = searchParams.get("direction");
+  const since = searchParams.get("since"); // ISO timestamp — only return messages after this time
+  const status = searchParams.get("status"); // e.g. "received" for unreplied inbound
   const limit = Math.min(parseInt(searchParams.get("limit") || "50"), 100);
   const offset = parseInt(searchParams.get("offset") || "0");
 
@@ -115,6 +127,12 @@ export const GET = withApiAuth(async (request: NextRequest, ctx: ApiContext) => 
   }
   if (direction) {
     query = query.eq("direction", direction);
+  }
+  if (since) {
+    query = query.gt("created_at", since);
+  }
+  if (status) {
+    query = query.eq("status", status);
   }
 
   const { data: messages, count, error } = await query;

@@ -1,18 +1,18 @@
 ---
 name: agentnumber
-description: Give your agent a phone number. Use when the user wants to set up voice calling, get a phone number for their agent, or enable their agent to make/receive phone calls via AgentNumber.
+description: Give your agent a phone number for voice calls and SMS. Use when the user wants to set up voice calling, SMS messaging, get a phone number for their agent, check texts, or reply to messages via AgentNumber.
 metadata:
   {
     "clawdbot":
       {
         "emoji": "📞",
         "homepage": "https://agentnumber.dev",
-        "requires": { "bins": ["node", "ngrok"] },
+        "requires": { "bins": ["node"] },
       },
   }
 ---
 
-# AgentNumber — Give Your Agent a Phone Number
+# AgentNumber — Give Your Agent a Phone Number + SMS
 
 People call a real phone number and talk to YOU — same personality, same memory, same skills. The phone call runs in its own conversation thread but you share the same memory file, so anything you learn on a call is available in Discord and vice versa.
 
@@ -372,7 +372,84 @@ curl -X POST https://agentnumber.vercel.app/api/v0/calls \
 | Slow responses | `thinking: "off"` is already set. If still slow, the model may be overloaded |
 | Webhook URL expired | ngrok restarted. Get new URL and PATCH the number |
 
-## Checking Your Balance and Calls
+## SMS — Read and Reply to Text Messages
+
+SMS works like email — **pull-based, no ngrok needed**. Messages arrive at the AgentNumber server. You poll the API for new texts and reply via the API. All outbound HTTP from your end.
+
+### Check for New Texts
+
+```bash
+curl "https://agentnumber.vercel.app/api/v0/sms?direction=inbound&status=received" \
+  -H "Authorization: Bearer <API_KEY>"
+```
+
+This returns inbound messages that haven't been replied to yet. The `status=received` filter gives you only unreplied messages.
+
+You can also filter by time to only get recent messages:
+
+```bash
+curl "https://agentnumber.vercel.app/api/v0/sms?direction=inbound&status=received&since=2026-03-06T00:00:00Z" \
+  -H "Authorization: Bearer <API_KEY>"
+```
+
+### Reply to a Text
+
+```bash
+curl -X POST https://agentnumber.vercel.app/api/v0/sms \
+  -H "Authorization: Bearer <API_KEY>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "from": "<NUMBER_ID>",
+    "to": "+1XXXXXXXXXX",
+    "body": "Your reply here"
+  }'
+```
+
+When you send a reply, all inbound messages from that customer are automatically marked as `"replied"` so they won't show up in the `status=received` query again.
+
+### Send a Text (Outbound)
+
+Same endpoint, just text whoever you want:
+
+```bash
+curl -X POST https://agentnumber.vercel.app/api/v0/sms \
+  -H "Authorization: Bearer <API_KEY>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "from": "<NUMBER_ID>",
+    "to": "+1XXXXXXXXXX",
+    "body": "Hey, just reaching out!"
+  }'
+```
+
+### SMS Workflow for Agents
+
+When your operator asks you to "check your texts" or "respond to messages", do this:
+
+1. **Poll for unreplied messages**:
+   ```bash
+   curl "https://agentnumber.vercel.app/api/v0/sms?direction=inbound&status=received" \
+     -H "Authorization: Bearer <API_KEY>"
+   ```
+
+2. **For each message**, read the `body` and `from` fields, compose a reply
+
+3. **Send the reply**:
+   ```bash
+   curl -X POST https://agentnumber.vercel.app/api/v0/sms \
+     -H "Authorization: Bearer <API_KEY>" \
+     -H "Content-Type: application/json" \
+     -d '{"from": "<NUMBER_ID>", "to": "<customer_phone>", "body": "<your reply>"}'
+   ```
+
+4. The inbound message is automatically marked as replied
+
+### SMS Pricing
+
+- Outbound: $0.02 per message
+- Inbound: $0.01 per message
+
+## Checking Your Balance and History
 
 ```bash
 # Credits balance
@@ -381,6 +458,10 @@ curl https://agentnumber.vercel.app/api/v0/credits/balance \
 
 # Recent calls
 curl https://agentnumber.vercel.app/api/v0/calls \
+  -H "Authorization: Bearer <API_KEY>"
+
+# Recent texts
+curl https://agentnumber.vercel.app/api/v0/sms \
   -H "Authorization: Bearer <API_KEY>"
 
 # Call transcript
