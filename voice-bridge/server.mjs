@@ -1,7 +1,23 @@
 import { createServer } from "http";
 import { randomUUID } from "crypto";
 import { readFileSync } from "fs";
+import { resolve, dirname } from "path";
+import { fileURLToPath } from "url";
 import WebSocket from "ws";
+
+// Load .env from voice-bridge directory
+try {
+  const __dirname = dirname(fileURLToPath(import.meta.url));
+  const envFile = readFileSync(resolve(__dirname, ".env"), "utf-8");
+  for (const line of envFile.split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const eq = trimmed.indexOf("=");
+    if (eq > 0) process.env[trimmed.slice(0, eq)] = trimmed.slice(eq + 1);
+  }
+} catch {
+  // No .env file, that's fine
+}
 
 const PORT = 3002;
 const GATEWAY_URL = "ws://127.0.0.1:18785/";
@@ -9,6 +25,12 @@ const GATEWAY_TOKEN = "2486df6422ee6667314c3973477e6ffcf496f02de6b7e9a8";
 const AGENT_ID = "main";
 const SESSION_KEY = "agent:main:phone";
 const MEMORY_FILE = "/Users/dannyren/.openclaw/workspace/MEMORY.md";
+
+// SMS polling config
+const AN_API_URL = process.env.AN_API_URL || "https://agentnumber.vercel.app";
+const AN_API_KEY = process.env.AN_API_KEY || "";
+const AN_NUMBER_ID = process.env.AN_NUMBER_ID || "";
+const SMS_POLL_INTERVAL = 10000; // 10 seconds
 
 const VOICE_RULES = `You are on a LIVE PHONE CALL right now. This is real-time voice, not text chat.
 
@@ -567,11 +589,120 @@ const server = createServer(async (req, res) => {
 
 // ─── Start ───
 
+// ─── SMS Poller ───
+
+let lastPollTime = new Date().toISOString();
+
+async function pollSms() {
+  if (!AN_API_KEY || !AN_NUMBER_ID) return;
+  if (!connected) return;
+
+  try {
+    const url = `${AN_API_URL}/api/v0/sms?direction=inbound&status=received&since=${encodeURIComponent(lastPollTime)}&limit=10`;
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${AN_API_KEY}` },
+      signal: AbortSignal.timeout(5000),
+    });
+
+    if (!res.ok) return;
+
+    const { data: messages } = await res.json();
+    if (!messages || messages.length === 0) return;
+
+    console.log(`[sms-poll] ${messages.length} new message(s)`);
+
+    for (const msg of messages) {
+      const senderNumber = msg.from;
+      const smsSessionKey = `agent:${AGENT_ID}:sms:${senderNumber}`;
+
+      console.log(`[sms-poll] From ${senderNumber}: "${msg.body}"`);
+
+      try {
+        const ack = await sendRequest("agent", {
+          agentId: AGENT_ID,
+          sessionKey: smsSessionKey,
+          message: msg.body,
+          idempotencyKey: randomUUID(),
+          thinking: "off",
+          extraSystemPrompt: SMS_RULES,
+        });
+
+        const runId = ack.runId;
+        const run = createRun(runId);
+
+        // Collect agent response
+        await new Promise((resolve, reject) => {
+          let fullText = "";
+          const timeout = setTimeout(() => {
+            pendingRuns.delete(runId);
+            if (fullText) resolve(fullText);
+            else reject(new Error("Timeout"));
+          }, 30000);
+
+          run.setHandlers(
+            (text) => { fullText = text; },
+            (text) => {
+              clearTimeout(timeout);
+              if (text) fullText = text;
+              pendingRuns.delete(runId);
+              resolve(fullText);
+            },
+            (err) => {
+              clearTimeout(timeout);
+              pendingRuns.delete(runId);
+              reject(new Error(err));
+            }
+          );
+        }).then(async (replyText) => {
+          if (!replyText) return;
+
+          console.log(`[sms-poll] Reply to ${senderNumber}: "${replyText}"`);
+
+          // Send reply via AgentNumber API
+          const sendRes = await fetch(`${AN_API_URL}/api/v0/sms`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${AN_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              from: AN_NUMBER_ID,
+              to: senderNumber,
+              body: replyText,
+            }),
+          });
+
+          if (!sendRes.ok) {
+            console.error(`[sms-poll] Failed to send reply: ${sendRes.status}`);
+          }
+        });
+      } catch (err) {
+        console.error(`[sms-poll] Error processing message from ${senderNumber}:`, err.message);
+      }
+    }
+
+    // Update poll timestamp to latest message
+    lastPollTime = messages[0].created_at;
+  } catch (err) {
+    if (err.name !== "TimeoutError") {
+      console.error("[sms-poll] Poll error:", err.message);
+    }
+  }
+}
+
+// ─── Start ───
+
 connectGateway();
 
 server.listen(PORT, () => {
   console.log(`\nVoice bridge running on http://localhost:${PORT}`);
   console.log(`Gateway: ${GATEWAY_URL}`);
   console.log(`Session: ${SESSION_KEY}`);
+  if (AN_API_KEY && AN_NUMBER_ID) {
+    console.log(`SMS polling: every ${SMS_POLL_INTERVAL / 1000}s (number: ${AN_NUMBER_ID})`);
+    setInterval(pollSms, SMS_POLL_INTERVAL);
+  } else {
+    console.log(`SMS polling: disabled (set AN_API_KEY and AN_NUMBER_ID to enable)`);
+  }
   console.log(`\nWaiting for WebSocket connection...\n`);
 });
