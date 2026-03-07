@@ -7,6 +7,35 @@ import crypto from "crypto";
 
 const SMS_INBOUND_COST_CENTS = 1; // $0.01 per inbound SMS
 
+function buildCandidateUrls(request: NextRequest): string[] {
+  const candidates = new Set<string>();
+
+  // Actual request URL as seen by Next.js.
+  candidates.add(request.nextUrl.toString());
+
+  // Reconstructed external URL behind proxies/load balancers.
+  const proto = request.headers.get("x-forwarded-proto");
+  const host = request.headers.get("x-forwarded-host") || request.headers.get("host");
+  if (proto && host) {
+    candidates.add(`${proto}://${host}${request.nextUrl.pathname}${request.nextUrl.search}`);
+  }
+
+  // Optional explicit site URL fallback.
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
+  if (siteUrl) {
+    candidates.add(`${siteUrl}${request.nextUrl.pathname}${request.nextUrl.search}`);
+  }
+
+  return [...candidates];
+}
+
+function safeEqual(a: string, b: string): boolean {
+  const aBuf = Buffer.from(a);
+  const bBuf = Buffer.from(b);
+  if (aBuf.length !== bBuf.length) return false;
+  return crypto.timingSafeEqual(aBuf, bBuf);
+}
+
 function validateTwilioSignature(request: NextRequest, params: URLSearchParams): boolean {
   const authToken = process.env.TWILIO_AUTH_TOKEN;
   if (!authToken) return true; // Skip validation if not configured (local dev)
@@ -14,21 +43,21 @@ function validateTwilioSignature(request: NextRequest, params: URLSearchParams):
   const signature = request.headers.get("x-twilio-signature");
   if (!signature) return false;
 
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://agentnumber.vercel.app";
-  const url = `${baseUrl}/api/webhooks/twilio/sms`;
-
   // Twilio: sort POST params alphabetically, concatenate key+value
   const sortedParams = Array.from(params.entries())
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([k, v]) => k + v)
     .join("");
 
-  const expected = crypto
-    .createHmac("sha1", authToken)
-    .update(url + sortedParams)
-    .digest("base64");
+  for (const url of buildCandidateUrls(request)) {
+    const expected = crypto
+      .createHmac("sha1", authToken)
+      .update(url + sortedParams)
+      .digest("base64");
+    if (safeEqual(signature, expected)) return true;
+  }
 
-  return signature === expected;
+  return false;
 }
 
 export async function POST(request: NextRequest) {

@@ -31,7 +31,12 @@ export const POST = withApiAuth(async (request: NextRequest, ctx: ApiContext) =>
     return apiError("body must be 1-1600 characters", "validation_error", 400);
   }
 
-  const numberId = fromPublicId(from);
+  let numberId: string;
+  try {
+    numberId = fromPublicId(from);
+  } catch {
+    return apiError("from must be a valid number ID", "validation_error", 400);
+  }
   const supabase = createServiceClient();
 
   const { data: number } = await supabase
