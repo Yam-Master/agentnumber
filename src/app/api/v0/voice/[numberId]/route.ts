@@ -55,40 +55,37 @@ export async function POST(
     });
 
     const encoder = new TextEncoder();
+    const chatId = `chatcmpl-${Date.now()}`;
+    const created = Math.floor(Date.now() / 1000);
+
+    function sseChunk(delta: Record<string, unknown>, finishReason: string | null = null) {
+      return `data: ${JSON.stringify({
+        id: chatId,
+        object: "chat.completion.chunk",
+        created,
+        model: "custom",
+        choices: [{ index: 0, delta, logprobs: null, finish_reason: finishReason }],
+      })}\n\n`;
+    }
+
     const readable = new ReadableStream({
       async start(controller) {
         try {
+          // Initial role chunk (OpenAI spec)
+          controller.enqueue(encoder.encode(sseChunk({ role: "assistant" })));
+
           for await (const event of stream) {
             if (
               event.type === "content_block_delta" &&
               event.delta.type === "text_delta"
             ) {
-              const chunk = {
-                id: `chatcmpl-${Date.now()}`,
-                object: "chat.completion.chunk",
-                choices: [
-                  {
-                    index: 0,
-                    delta: { content: event.delta.text },
-                    finish_reason: null,
-                  },
-                ],
-              };
               controller.enqueue(
-                encoder.encode(`data: ${JSON.stringify(chunk)}\n\n`)
+                encoder.encode(sseChunk({ content: event.delta.text }))
               );
             }
           }
 
-          // Send finish
-          const finish = {
-            id: `chatcmpl-${Date.now()}`,
-            object: "chat.completion.chunk",
-            choices: [{ index: 0, delta: {}, finish_reason: "stop" }],
-          };
-          controller.enqueue(
-            encoder.encode(`data: ${JSON.stringify(finish)}\n\n`)
-          );
+          controller.enqueue(encoder.encode(sseChunk({}, "stop")));
           controller.enqueue(encoder.encode("data: [DONE]\n\n"));
           controller.close();
         } catch (err) {
@@ -121,10 +118,13 @@ export async function POST(
       JSON.stringify({
         id: `chatcmpl-${Date.now()}`,
         object: "chat.completion",
+        created: Math.floor(Date.now() / 1000),
+        model: "custom",
         choices: [
           {
             index: 0,
             message: { role: "assistant", content: text },
+            logprobs: null,
             finish_reason: "stop",
           },
         ],

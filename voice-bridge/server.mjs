@@ -469,6 +469,20 @@ const server = createServer(async (req, res) => {
         let sentLength = 0; // Track how much text we've already sent
         let fullResponse = "";
         let firstDeltaTime = null;
+        const created = Math.floor(Date.now() / 1000);
+
+        function sseChunk(delta, finishReason = null) {
+          return JSON.stringify({
+            id: `chatcmpl-${runId}`,
+            object: "chat.completion.chunk",
+            created,
+            model: "custom",
+            choices: [{ index: 0, delta, logprobs: null, finish_reason: finishReason }],
+          });
+        }
+
+        // Send initial role chunk (OpenAI spec)
+        res.write(`data: ${sseChunk({ role: "assistant" })}\n\n`);
 
         run.setHandlers(
           // onDelta — deltas are CUMULATIVE (full text so far), send only the new part
@@ -481,12 +495,7 @@ const server = createServer(async (req, res) => {
             if (newPart) {
               sentLength = text.length;
               fullResponse = text;
-              const chunk = {
-                id: `chatcmpl-${runId}`,
-                object: "chat.completion.chunk",
-                choices: [{ index: 0, delta: { content: newPart }, finish_reason: null }],
-              };
-              res.write(`data: ${JSON.stringify(chunk)}\n\n`);
+              res.write(`data: ${sseChunk({ content: newPart })}\n\n`);
             }
           },
           // onFinal — also cumulative, send any remaining text
@@ -494,17 +503,12 @@ const server = createServer(async (req, res) => {
             if (text) {
               const remaining = text.slice(sentLength);
               if (remaining) {
-                const chunk = {
-                  id: `chatcmpl-${runId}`,
-                  object: "chat.completion.chunk",
-                  choices: [{ index: 0, delta: { content: remaining }, finish_reason: null }],
-                };
-                res.write(`data: ${JSON.stringify(chunk)}\n\n`);
+                res.write(`data: ${sseChunk({ content: remaining })}\n\n`);
               }
               fullResponse = text;
             }
             console.log(`[call] Agent (${Date.now() - reqTime}ms): "${fullResponse}"`);
-            res.write(`data: ${JSON.stringify({ id: `chatcmpl-${runId}`, object: "chat.completion.chunk", choices: [{ index: 0, delta: {}, finish_reason: "stop" }] })}\n\n`);
+            res.write(`data: ${sseChunk({}, "stop")}\n\n`);
             res.write("data: [DONE]\n\n");
             res.end();
             pendingRuns.delete(runId);
@@ -512,13 +516,8 @@ const server = createServer(async (req, res) => {
           // onError
           (err) => {
             console.error(`[call] Agent error (${Date.now() - reqTime}ms): ${err}`);
-            const chunk = {
-              id: `chatcmpl-${runId}`,
-              object: "chat.completion.chunk",
-              choices: [{ index: 0, delta: { content: "Sorry, I'm having trouble right now." }, finish_reason: null }],
-            };
-            res.write(`data: ${JSON.stringify(chunk)}\n\n`);
-            res.write(`data: ${JSON.stringify({ id: `chatcmpl-${runId}`, object: "chat.completion.chunk", choices: [{ index: 0, delta: {}, finish_reason: "stop" }] })}\n\n`);
+            res.write(`data: ${sseChunk({ content: "Sorry, I'm having trouble right now." })}\n\n`);
+            res.write(`data: ${sseChunk({}, "stop")}\n\n`);
             res.write("data: [DONE]\n\n");
             res.end();
             pendingRuns.delete(runId);
@@ -530,7 +529,7 @@ const server = createServer(async (req, res) => {
           if (!res.writableEnded) {
             console.warn(`[call] Timeout for runId=${runId} after 30s`);
             pendingRuns.delete(runId);
-            res.write(`data: ${JSON.stringify({ id: `chatcmpl-${runId}`, object: "chat.completion.chunk", choices: [{ index: 0, delta: {}, finish_reason: "stop" }] })}\n\n`);
+            res.write(`data: ${sseChunk({}, "stop")}\n\n`);
             res.write("data: [DONE]\n\n");
             res.end();
           }
@@ -547,7 +546,9 @@ const server = createServer(async (req, res) => {
             res.end(JSON.stringify({
               id: `chatcmpl-${runId}`,
               object: "chat.completion",
-              choices: [{ index: 0, message: { role: "assistant", content: fullText }, finish_reason: "stop" }],
+              created: Math.floor(Date.now() / 1000),
+              model: "custom",
+              choices: [{ index: 0, message: { role: "assistant", content: fullText }, logprobs: null, finish_reason: "stop" }],
             }));
             pendingRuns.delete(runId);
           },
@@ -566,7 +567,9 @@ const server = createServer(async (req, res) => {
             res.end(JSON.stringify({
               id: `chatcmpl-${runId}`,
               object: "chat.completion",
-              choices: [{ index: 0, message: { role: "assistant", content: fullText || "Sorry, I took too long." }, finish_reason: "stop" }],
+              created: Math.floor(Date.now() / 1000),
+              model: "custom",
+              choices: [{ index: 0, message: { role: "assistant", content: fullText || "Sorry, I took too long." }, logprobs: null, finish_reason: "stop" }],
             }));
           }
         }, 30000);
