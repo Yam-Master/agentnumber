@@ -327,6 +327,38 @@ const server = createServer(async (req, res) => {
     return;
   }
 
+  // ─── Test endpoint — hardcoded SSE response, no OpenClaw ───
+  if (req.method === "POST" && req.url === "/test") {
+    const created = Math.floor(Date.now() / 1000);
+    const id = `chatcmpl-test-${Date.now()}`;
+    function testChunk(delta, finish = null) {
+      return `data: ${JSON.stringify({ id, object: "chat.completion.chunk", created, model: "custom", system_fingerprint: null, choices: [{ index: 0, delta, logprobs: null, finish_reason: finish }] })}\n\n`;
+    }
+
+    res.writeHead(200, {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache, no-transform",
+      Connection: "keep-alive",
+      "X-Accel-Buffering": "no",
+    });
+
+    // Simulate streaming with delays (like a real LLM)
+    res.write(testChunk({ role: "assistant" }));
+    const words = ["Hey! ", "I can ", "hear you. ", "This is ", "a test ", "response."];
+    let i = 0;
+    const iv = setInterval(() => {
+      if (i < words.length) {
+        res.write(testChunk({ content: words[i++] }));
+      } else {
+        clearInterval(iv);
+        res.write(testChunk({}, "stop"));
+        res.write("data: [DONE]\n\n");
+        res.end();
+      }
+    }, 100);
+    return;
+  }
+
   // ─── SMS endpoint ───
   if (req.method === "POST" && req.url === "/sms") {
     let body = "";
@@ -462,8 +494,9 @@ const server = createServer(async (req, res) => {
       if (parsed.stream) {
         res.writeHead(200, {
           "Content-Type": "text/event-stream",
-          "Cache-Control": "no-cache",
+          "Cache-Control": "no-cache, no-transform",
           Connection: "keep-alive",
+          "X-Accel-Buffering": "no",
         });
 
         let sentLength = 0; // Track how much text we've already sent
