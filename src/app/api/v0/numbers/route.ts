@@ -50,6 +50,16 @@ export const POST = withApiAuth(async (request: NextRequest, ctx: ApiContext) =>
   // Determine voice_mode — gateway or webhook only
   const voice_mode = gateway_url ? "gateway" : "webhook";
 
+  // Validate encryption key is available before doing anything expensive
+  if (gateway_token) {
+    try {
+      encrypt(gateway_token);
+    } catch (err) {
+      console.error("Encryption test failed:", err instanceof Error ? err.message : err);
+      return apiError("Server configuration error: encryption not available", "internal_error", 500);
+    }
+  }
+
   // 1. Find and buy a Twilio number
   let e164Number: string;
   let twilioNumberSid: string;
@@ -60,6 +70,7 @@ export const POST = withApiAuth(async (request: NextRequest, ctx: ApiContext) =>
     twilioNumberSid = bought.sid;
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to provision phone number";
+    console.error("Twilio provisioning error:", message);
     return apiError(message, "provisioning_error", 500);
   }
 
@@ -93,6 +104,7 @@ export const POST = withApiAuth(async (request: NextRequest, ctx: ApiContext) =>
     .single();
 
   if (insertError) {
+    console.error("DB insert error:", insertError.message, insertError.code);
     return apiError("Failed to create number record", "internal_error", 500);
   }
 
