@@ -1,0 +1,22 @@
+{
+  "name": "@agentnumber/tunnel",
+  "version": "0.1.0",
+  "description": "Tunnel client for AgentNumber relay — connects local OpenClaw gateway to AgentNumber",
+  "bin": {
+    "tunnel": "./dist/tunnel.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx server.ts",
+    "start": "node dist/server.js"
+  },
+  "dependencies": {
+    "ws": "^8.19.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/ws": "^8.18.1",
+    "tsx": "^4.19.0",
+    "typescript": "^5"
+  }
+}

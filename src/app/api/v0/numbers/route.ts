@@ -29,10 +29,10 @@ export const POST = withApiAuth(async (request: NextRequest, ctx: ApiContext) =>
     gateway_session_key,
   } = body;
 
-  // Must provide one of: gateway config, webhook_url, or system_prompt
-  if (!webhook_url && !system_prompt && !gateway_url) {
+  // Must provide gateway config or webhook
+  if (!gateway_url && !webhook_url) {
     return apiError(
-      "Provide gateway_url + gateway_token + gateway_agent_id (OpenClaw bridge), webhook_url (your agent's endpoint), or system_prompt (managed by AgentNumber).",
+      "Provide gateway_url + gateway_token + gateway_agent_id (OpenClaw gateway via ngrok), or webhook_url (your agent's endpoint).",
       "validation_error",
       400
     );
@@ -47,8 +47,8 @@ export const POST = withApiAuth(async (request: NextRequest, ctx: ApiContext) =>
     );
   }
 
-  // Determine voice_mode
-  const voice_mode = gateway_url ? "gateway" : webhook_url ? "webhook" : "anthropic";
+  // Determine voice_mode — gateway or webhook only
+  const voice_mode = gateway_url ? "gateway" : "webhook";
 
   // 1. Find and buy a Twilio number
   let e164Number: string;

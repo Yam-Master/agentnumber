@@ -35,6 +35,7 @@ export async function POST(request: NextRequest) {
 
   const orgId = await getOrgId();
   if (!orgId) {
+    console.error("API key creation: no orgId — user not authenticated or no org membership");
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -54,7 +55,8 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (error) {
-    return NextResponse.json({ error: "Failed to create API key" }, { status: 500 });
+    console.error("API key creation error:", error.message, error.code, error.details);
+    return NextResponse.json({ error: "Failed to create API key", detail: error.message }, { status: 500 });
   }
 
   // Return full key only on creation

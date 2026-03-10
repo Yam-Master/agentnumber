@@ -1,12 +1,8 @@
 import { NextRequest } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
 import { createServiceClient } from "@/lib/supabase/server";
 import { decrypt } from "@/lib/crypto";
-import { openClawRequest } from "@/lib/openclaw";
-
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY!,
-});
+import { openClawRequest, isRelayUrl } from "@/lib/openclaw";
+import { relayRequest } from "@/lib/relay";
 
 export async function POST(
   request: NextRequest,
@@ -17,7 +13,7 @@ export async function POST(
 
   const { data: number } = await supabase
     .from("numbers")
-    .select("system_prompt, status, voice_mode, gateway_url, gateway_token_encrypted, gateway_agent_id, gateway_session_key")
+    .select("status, voice_mode, gateway_url, gateway_token_encrypted, gateway_agent_id, gateway_session_key")
     .eq("id", numberId)
     .single();
 
@@ -28,15 +24,17 @@ export async function POST(
     });
   }
 
+  if (number.voice_mode !== "gateway") {
+    return new Response(JSON.stringify({ error: "Number is not configured for gateway mode" }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   const body = await request.json();
   const messages: { role: string; content: string }[] = body.messages || [];
 
-  if (number.voice_mode === "gateway") {
-    return handleGateway(number, messages, body.stream);
-  }
-
-  // Default: anthropic mode
-  return handleAnthropic(number, messages, body.stream);
+  return handleGateway(number, messages, body.stream);
 }
 
 // ─── SSE Helpers ───
@@ -83,6 +81,7 @@ function handleGateway(
     sessionKey: (number.gateway_session_key as string) || `agent:${number.gateway_agent_id}:phone`,
   };
 
+  const requestFn = isRelayUrl(config.gatewayUrl) ? relayRequest : openClawRequest;
   const encoder = new TextEncoder();
 
   if (stream) {
@@ -95,7 +94,7 @@ function handleGateway(
         // Initial role chunk (OpenAI spec)
         controller.enqueue(encoder.encode(sseChunk(chatId, created, { role: "assistant" })));
 
-        openClawRequest(
+        requestFn(
           config,
           { message: userText },
           {
@@ -143,7 +142,7 @@ function handleGateway(
     // Non-streaming gateway
     return (async () => {
       let fullText = "";
-      await openClawRequest(
+      await requestFn(
         config,
         { message: userText },
         {
@@ -164,102 +163,5 @@ function handleGateway(
         { headers: { "Content-Type": "application/json" } }
       );
     })();
-  }
-}
-
-// ─── Anthropic Mode ───
-
-async function handleAnthropic(
-  number: Record<string, unknown>,
-  messages: { role: string; content: string }[],
-  stream: boolean
-) {
-  const systemPrompt = (number.system_prompt as string) || "You are a helpful phone assistant. Keep responses concise and conversational.";
-  const anthropicMessages = messages
-    .filter((m) => m.role === "user" || m.role === "assistant")
-    .map((m) => ({
-      role: m.role as "user" | "assistant",
-      content: m.content,
-    }));
-
-  if (anthropicMessages.length === 0 || anthropicMessages[0].role !== "user") {
-    anthropicMessages.unshift({ role: "user", content: "Hello" });
-  }
-
-  if (stream) {
-    const anthropicStream = await anthropic.messages.stream({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 300,
-      system: systemPrompt,
-      messages: anthropicMessages,
-    });
-
-    const encoder = new TextEncoder();
-    const chatId = `chatcmpl-${Date.now()}`;
-    const created = Math.floor(Date.now() / 1000);
-
-    const readable = new ReadableStream({
-      async start(controller) {
-        try {
-          // Initial role chunk (OpenAI spec)
-          controller.enqueue(encoder.encode(sseChunk(chatId, created, { role: "assistant" })));
-
-          for await (const event of anthropicStream) {
-            if (
-              event.type === "content_block_delta" &&
-              event.delta.type === "text_delta"
-            ) {
-              controller.enqueue(
-                encoder.encode(sseChunk(chatId, created, { content: event.delta.text }))
-              );
-            }
-          }
-
-          controller.enqueue(encoder.encode(sseChunk(chatId, created, {}, "stop")));
-          controller.enqueue(encoder.encode("data: [DONE]\n\n"));
-          controller.close();
-        } catch (err) {
-          console.error("Voice stream error:", err);
-          controller.close();
-        }
-      },
-    });
-
-    return new Response(readable, {
-      headers: {
-        "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache, no-transform",
-        Connection: "keep-alive",
-        "X-Accel-Buffering": "no",
-      },
-    });
-  } else {
-    const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 300,
-      system: systemPrompt,
-      messages: anthropicMessages,
-    });
-
-    const text =
-      response.content[0].type === "text" ? response.content[0].text : "";
-
-    return new Response(
-      JSON.stringify({
-        id: `chatcmpl-${Date.now()}`,
-        object: "chat.completion",
-        created: Math.floor(Date.now() / 1000),
-        model: "custom",
-        choices: [
-          {
-            index: 0,
-            message: { role: "assistant", content: text },
-            logprobs: null,
-            finish_reason: "stop",
-          },
-        ],
-      }),
-      { headers: { "Content-Type": "application/json" } }
-    );
   }
 }

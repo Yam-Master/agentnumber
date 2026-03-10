@@ -4,7 +4,8 @@ import { debitCredits } from "@/lib/credits/operations";
 import { deliverWebhooks } from "@/lib/webhooks/deliver";
 import { sendSms } from "@/lib/twilio";
 import { decrypt } from "@/lib/crypto";
-import { openClawRequest } from "@/lib/openclaw";
+import { openClawRequest, isRelayUrl } from "@/lib/openclaw";
+import { relayRequest } from "@/lib/relay";
 import { toPublicId } from "@/lib/api/ids";
 import crypto from "crypto";
 
@@ -175,8 +176,9 @@ export async function POST(request: NextRequest) {
             ? smsSessionKey
             : `${smsSessionKey}:sms:${from}`;
 
+          const requestFn = isRelayUrl(number.gateway_url) ? relayRequest : openClawRequest;
           let replyText = "";
-          await openClawRequest(
+          await requestFn(
             {
               gatewayUrl: number.gateway_url,
               gatewayToken,

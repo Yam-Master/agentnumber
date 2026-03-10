@@ -31,6 +31,10 @@ function extractText(chatMsg: { content?: string | Array<{ type: string; text?: 
   return "";
 }
 
+export function isRelayUrl(url: string): boolean {
+  return url.startsWith("https://relay.") || url.startsWith("http://relay.");
+}
+
 export function openClawRequest(
   config: OpenClawConfig,
   params: OpenClawParams,
