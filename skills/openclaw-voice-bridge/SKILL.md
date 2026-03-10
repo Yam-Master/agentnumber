@@ -1,6 +1,6 @@
 ---
-name: agentnumber
-description: Give your agent a phone number for voice calls and SMS. Use when the user wants to set up voice calling, SMS messaging, get a phone number for their agent, check texts, or reply to messages via AgentNumber.
+name: openclaw-voice-bridge
+description: Run and operate the AgentNumber OpenClaw voice bridge. Use when the user asks how calls/SMS are routed between OpenClaw, Vapi, Twilio, and AgentNumber, or needs setup/troubleshooting.
 metadata:
   {
     "clawdbot":
@@ -12,459 +12,138 @@ metadata:
   }
 ---
 
-# AgentNumber — Give Your Agent a Phone Number + SMS
+# OpenClaw Voice Bridge (AgentNumber)
 
-People call a real phone number and talk to YOU — same personality, same memory, same skills. The phone call runs in its own conversation thread but you share the same memory file, so anything you learn on a call is available in Discord and vice versa.
+This skill explains and operates the local bridge at:
 
-## What You Need From Your Operator
+- `voice-bridge/server.mjs`
 
-Before starting, ask your operator for:
-1. **AgentNumber API key** — format: `an_live_<32 hex chars>`. Get one from the AgentNumber dashboard.
+The bridge is a local process that connects OpenClaw <-> phone channels.
 
-That's it. Everything else you can read from your own config.
+## What It Does
 
-## Setup Steps
+1. Connects to the local OpenClaw gateway over WebSocket.
+2. Exposes HTTP endpoints for voice and SMS.
+3. Routes incoming voice turns to your OpenClaw agent and returns OpenAI-compatible responses for Vapi.
+4. Optionally polls AgentNumber inbound SMS and sends agent-generated SMS replies.
 
-You (the agent) should execute these steps yourself. Do them in order.
+## Current Architecture
 
-### 1. Read Your Own Config
+### Voice path (push)
 
-Read `~/.openclaw/openclaw.json` and extract:
-- Your agent ID from `agents.list` (look for your own entry — probably `"main"`)
-- Gateway port from `gateway.port` (default 18785)
-- Gateway auth token from `gateway.auth.token`
+Caller -> Twilio/Vapi -> AgentNumber number config `webhook_url` -> local bridge `POST /` -> OpenClaw gateway -> agent response -> bridge -> Vapi -> caller.
 
-Store these for the next step:
-```
-AGENT_ID=<your agent id>
-GATEWAY_URL=ws://127.0.0.1:<port>/
-GATEWAY_TOKEN=<token>
-```
+### SMS path (two options)
 
-### 2. Create the Voice Bridge
+- Push-to-bridge mode:
+  Twilio/AgentNumber -> bridge `POST /sms` -> OpenClaw -> bridge JSON response.
+- Polling auto-reply mode:
+  Bridge polls `GET /api/v0/sms?direction=inbound&status=received...` every 10s, asks OpenClaw for a reply, sends via `POST /api/v0/sms`.
 
-Create a directory called `voice-bridge` in your workspace, then:
+## Required Config
 
-```bash
-cd voice-bridge && npm init -y && npm install ws
-```
+### In `voice-bridge/server.mjs`
 
-Write `voice-bridge/server.mjs` with the content below. **Replace the 3 config values** at the top with what you read in step 1:
+- `GATEWAY_URL`
+- `GATEWAY_TOKEN`
+- `AGENT_ID`
+- `SESSION_KEY`
+- `MEMORY_FILE` (optional, but used for voice prompt context)
 
-```javascript
-import { createServer } from "http";
-import { randomUUID } from "crypto";
-import WebSocket from "ws";
+### In `voice-bridge/.env` (for SMS polling)
 
-// ─── CONFIG: Fill these from your openclaw.json ───
-const PORT = 3002;
-const GATEWAY_URL = "ws://127.0.0.1:18785/";  // gateway.port
-const GATEWAY_TOKEN = "YOUR_TOKEN_HERE";        // gateway.auth.token
-const AGENT_ID = "main";                        // your agent id
-const SESSION_KEY = `agent:${AGENT_ID}:phone`;
+- `AN_API_URL` (default exists)
+- `AN_API_KEY`
+- `AN_NUMBER_ID` (`num_...`)
 
-const VOICE_RULES = `You are on a LIVE PHONE CALL right now. This is real-time voice, not text chat.
+If `AN_API_KEY` or `AN_NUMBER_ID` are missing, SMS polling is disabled.
 
-RULES:
-1. MAX 1-2 sentences per response. Brevity is critical.
-2. Sound natural — like a person on the phone. No lists, no markdown, no formatting.
-3. NEVER use tools, file reads, searches, or analysis. Just talk from memory.
-4. Be conversational. Ask short follow-ups instead of monologuing.
-5. If you don't know something, just say so in a few words.
-6. Never repeat yourself or re-introduce yourself.
-7. Match the caller's energy and keep it casual.`;
-
-let ws = null;
-let connected = false;
-let reqIdCounter = 0;
-const pendingRuns = new Map();
-const pendingReqs = new Map();
-
-function nextReqId() { return `r${++reqIdCounter}`; }
-
-function connectGateway() {
-  if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) return;
-  console.log("[ws] Connecting to OpenClaw gateway...");
-  ws = new WebSocket(GATEWAY_URL);
-
-  ws.on("open", () => console.log("[ws] Connected, waiting for challenge..."));
-
-  ws.on("message", (data) => {
-    let msg;
-    try { msg = JSON.parse(data.toString()); } catch { return; }
-
-    if (msg.type === "event" && msg.event === "connect.challenge") {
-      ws.send(JSON.stringify({
-        type: "req", id: nextReqId(), method: "connect",
-        params: {
-          minProtocol: 3, maxProtocol: 3,
-          client: { id: "gateway-client", displayName: "voice-bridge", version: "1.0.0", platform: "node", mode: "backend" },
-          auth: { token: GATEWAY_TOKEN }, role: "operator", scopes: ["operator.read", "operator.write"],
-        },
-      }));
-      return;
-    }
-
-    if (msg.type === "res" && msg.ok && msg.payload?.type === "hello-ok") {
-      connected = true;
-      console.log(`[ws] Authenticated! Protocol v${msg.payload.protocol}`);
-      return;
-    }
-
-    if (msg.type === "res" && msg.id) {
-      const pending = pendingReqs.get(msg.id);
-      if (pending) {
-        pendingReqs.delete(msg.id);
-        msg.ok ? pending.resolve(msg.payload) : pending.reject(new Error(msg.error?.message || "Request failed"));
-      }
-      return;
-    }
-
-    if (msg.type === "event" && msg.event === "chat") {
-      const { runId, state, message: chatMsg } = msg.payload || {};
-      const run = pendingRuns.get(runId);
-      if (!run) return;
-      if (state === "delta") { const t = extractText(chatMsg); if (t) run.pushDelta(t); }
-      else if (state === "final") run.pushFinal(extractText(chatMsg));
-      else if (state === "error") run.pushError(msg.payload?.errorMessage || "Agent error");
-      else if (state === "aborted") run.pushError("Aborted");
-      return;
-    }
-
-    if (msg.type === "event" && (msg.event === "agent" || msg.event === "tick" || msg.event === "health")) return;
-  });
-
-  ws.on("close", () => {
-    connected = false;
-    for (const [, r] of pendingRuns) r.pushError("Disconnected");
-    pendingRuns.clear();
-    for (const [, r] of pendingReqs) r.reject(new Error("Disconnected"));
-    pendingReqs.clear();
-    setTimeout(connectGateway, 2000);
-  });
-
-  ws.on("error", (err) => console.error("[ws] Error:", err.message));
-}
-
-function extractText(m) {
-  if (!m) return "";
-  if (typeof m.content === "string") return m.content;
-  if (Array.isArray(m.content)) return m.content.filter((b) => b.type === "text").map((b) => b.text).join("");
-  return "";
-}
-
-function sendRequest(method, params) {
-  return new Promise((resolve, reject) => {
-    if (!ws || ws.readyState !== WebSocket.OPEN || !connected) { reject(new Error("Not connected")); return; }
-    const id = nextReqId();
-    pendingReqs.set(id, { resolve, reject });
-    ws.send(JSON.stringify({ type: "req", id, method, params }));
-    setTimeout(() => { if (pendingReqs.has(id)) { pendingReqs.delete(id); reject(new Error("Timeout")); } }, 5000);
-  });
-}
-
-function createRun(runId) {
-  const buf = [];
-  let dH = null, fH = null, eH = null, done = false;
-  function flush() {
-    while (buf.length > 0 && (dH || fH || eH)) {
-      const e = buf.shift();
-      if (e.t === "d" && dH) dH(e.v);
-      else if (e.t === "f" && fH) { fH(e.v); done = true; }
-      else if (e.t === "e" && eH) { eH(e.v); done = true; }
-      else { buf.unshift(e); break; }
-    }
-  }
-  const run = {
-    pushDelta(t) { if (done) return; dH ? dH(t) : buf.push({ t: "d", v: t }); },
-    pushFinal(t) { if (done) return; fH ? (fH(t), done = true) : buf.push({ t: "f", v: t }); },
-    pushError(m) { if (done) return; eH ? (eH(m), done = true) : buf.push({ t: "e", v: m }); },
-    setHandlers(d, f, e) { dH = d; fH = f; eH = e; flush(); },
-  };
-  pendingRuns.set(runId, run);
-  return run;
-}
-
-const server = createServer(async (req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-
-  if (req.method === "OPTIONS") { res.writeHead(200); res.end(); return; }
-  if (req.method === "GET" && req.url === "/health") {
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ status: "ok", connected, agent: AGENT_ID }));
-    return;
-  }
-
-  if (req.method !== "POST") { res.writeHead(404); res.end("Not found"); return; }
-
-  let body = "";
-  for await (const chunk of req) body += chunk;
-  let parsed;
-  try { parsed = JSON.parse(body); } catch { res.writeHead(400); res.end('{"error":"Invalid JSON"}'); return; }
-
-  const userText = (parsed.messages || []).filter((m) => m.role === "user").pop()?.content || "";
-  if (!userText) { res.writeHead(400); res.end('{"error":"No user message"}'); return; }
-
-  console.log(`\n[${new Date().toISOString()}] Caller: "${userText}"`);
-  if (!connected) { res.writeHead(503); res.end('{"error":"Agent not connected"}'); return; }
-
-  try {
-    const ack = await sendRequest("agent", {
-      agentId: AGENT_ID, sessionKey: SESSION_KEY, message: userText,
-      idempotencyKey: randomUUID(), thinking: "off", extraSystemPrompt: VOICE_RULES,
-    });
-    const runId = ack.runId;
-    const run = createRun(runId);
-    const t0 = Date.now();
-
-    if (parsed.stream) {
-      res.writeHead(200, { "Content-Type": "text/event-stream", "Cache-Control": "no-cache", Connection: "keep-alive" });
-      let sent = 0, full = "";
-      const chunk = (content, finish) => `data: ${JSON.stringify({ id: `chatcmpl-${runId}`, object: "chat.completion.chunk", choices: [{ index: 0, delta: finish ? {} : { content }, finish_reason: finish ? "stop" : null }] })}\n\n`;
-
-      run.setHandlers(
-        (text) => { const p = text.slice(sent); if (p) { sent = text.length; full = text; res.write(chunk(p, false)); } },
-        (text) => { if (text) { const r = text.slice(sent); if (r) res.write(chunk(r, false)); full = text; } console.log(`[call] (${Date.now()-t0}ms): "${full}"`); res.write(chunk("", true)); res.write("data: [DONE]\n\n"); res.end(); pendingRuns.delete(runId); },
-        (err) => { console.error(`[call] Error: ${err}`); res.write(chunk("Sorry, I'm having trouble right now.", false)); res.write(chunk("", true)); res.write("data: [DONE]\n\n"); res.end(); pendingRuns.delete(runId); }
-      );
-      setTimeout(() => { if (!res.writableEnded) { pendingRuns.delete(runId); res.write(chunk("", true)); res.write("data: [DONE]\n\n"); res.end(); } }, 30000);
-    } else {
-      let full = "";
-      run.setHandlers(
-        (t) => { full = t; },
-        (t) => { if (t) full = t; console.log(`[call] (${Date.now()-t0}ms): "${full}"`); res.writeHead(200, { "Content-Type": "application/json" }); res.end(JSON.stringify({ id: `chatcmpl-${runId}`, object: "chat.completion", choices: [{ index: 0, message: { role: "assistant", content: full }, finish_reason: "stop" }] })); pendingRuns.delete(runId); },
-        (err) => { res.writeHead(500, { "Content-Type": "application/json" }); res.end(JSON.stringify({ error: err })); pendingRuns.delete(runId); }
-      );
-      setTimeout(() => { if (!res.writableEnded) { pendingRuns.delete(runId); res.writeHead(200, { "Content-Type": "application/json" }); res.end(JSON.stringify({ id: `chatcmpl-${runId}`, object: "chat.completion", choices: [{ index: 0, message: { role: "assistant", content: full || "Sorry, I took too long." }, finish_reason: "stop" }] })); } }, 30000);
-    }
-  } catch (err) {
-    console.error("[call] Error:", err.message);
-    if (!res.headersSent) res.writeHead(500, { "Content-Type": "application/json" });
-    if (!res.writableEnded) res.end(JSON.stringify({ error: err.message }));
-  }
-});
-
-connectGateway();
-server.listen(PORT, () => {
-  console.log(`\nVoice bridge running on http://localhost:${PORT}`);
-  console.log(`Agent: ${AGENT_ID} | Session: ${SESSION_KEY}`);
-  console.log(`Gateway: ${GATEWAY_URL}\n`);
-});
-```
-
-### 3. Start the Bridge
+## How To Run
 
 ```bash
-cd voice-bridge && node server.mjs
+cd voice-bridge
+node server.mjs
 ```
 
-You should see:
-```
-Voice bridge running on http://localhost:3002
-[ws] Authenticated! Protocol v3
-```
+Expected startup logs:
 
-If you see "Error: connect ECONNREFUSED" the OpenClaw gateway isn't running. Tell your operator to run `openclaw gateway start`.
+- `Voice bridge running on http://localhost:3002`
+- `Gateway: ...`
+- `Session: ...`
+- `SMS polling: every 10s ...` OR `SMS polling: disabled ...`
 
-### 4. Start ngrok
-
-In a separate terminal:
-
-```bash
-ngrok http 3002
-```
-
-This gives you a public HTTPS URL like `https://abc123.ngrok-free.dev`. Copy it.
-
-If ngrok isn't installed: `brew install ngrok`. If it needs auth: `ngrok authtoken <token>` (operator gets this from ngrok.com).
-
-### 5. Provision Your Phone Number
-
-Call the AgentNumber API. Replace `API_KEY` and `NGROK_URL`:
-
-```bash
-curl -X POST https://agentnumber.vercel.app/api/v0/numbers \
-  -H "Authorization: Bearer <API_KEY>" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "webhook_url": "<NGROK_URL>",
-    "first_message": "Hey, you reached my agent. How can I help?",
-    "area_code": "941"
-  }'
-```
-
-The response gives you your phone number and number ID. Save the number ID (format: `num_...`) — you need it to update the webhook later.
-
-### 6. Save Your Config
-
-Write a file `voice-bridge/config.json` in your workspace so you remember your setup:
-
-```json
-{
-  "api_key": "an_live_...",
-  "number_id": "num_...",
-  "phone_number": "+1...",
-  "ngrok_url": "https://..."
-}
-```
-
-### 7. Verify
+## Health Check
 
 ```bash
 curl http://localhost:3002/health
 ```
 
-Should return `{"status":"ok","connected":true,"agent":"main"}`.
+Returns JSON with:
 
-Now call the phone number. You should answer.
+- `status`
+- `connected` (OpenClaw gateway status)
+- `agent`
+- `session`
 
-## Day-to-Day Usage
+## AgentNumber Integration
 
-After initial setup, you just need two commands in separate terminals:
+For phone calls to hit the bridge, the number's `webhook_url` must point to the bridge's public URL.
 
-```bash
-# Terminal 1
-cd voice-bridge && node server.mjs
+Examples:
 
-# Terminal 2
-ngrok http 3002
-```
+- local dev tunnel URL: `https://<tunnel>/`
+- hosted bridge URL: `https://bridge.yourdomain.com/`
 
-**If ngrok gives you a new URL** (it changes on restart unless you have a paid plan), update your number:
+For SMS push mode to bridge, send webhook payloads to:
 
-```bash
-curl -X PATCH https://agentnumber.vercel.app/api/v0/numbers/<NUMBER_ID> \
-  -H "Authorization: Bearer <API_KEY>" \
-  -H "Content-Type: application/json" \
-  -d '{"webhook_url": "<NEW_NGROK_URL>"}'
-```
+- `https://<bridge>/sms`
 
-Update `voice-bridge/config.json` too so you remember the current URL.
+## Operational Notes
 
-## Making Outbound Calls
-
-You can also call people:
-
-```bash
-curl -X POST https://agentnumber.vercel.app/api/v0/calls \
-  -H "Authorization: Bearer <API_KEY>" \
-  -H "Content-Type: application/json" \
-  -d '{"from": "<NUMBER_ID>", "to": "+1XXXXXXXXXX"}'
-```
-
-## How It Works
-
-- **Same agent**: The voice bridge talks to your OpenClaw agent (same AGENT_ID)
-- **Separate session**: Phone calls get their own conversation thread (`agent:<id>:phone`) so caller messages don't appear in your Discord channels
-- **Shared memory**: You read the same MEMORY.md / workspace files, so knowledge carries across Discord and phone
-- **Shared skills**: All your skills work on phone too (though VOICE_RULES tells you not to use tools during calls for speed)
-- **Voice rules**: An `extraSystemPrompt` is injected on every call telling you to keep responses short and conversational
+- Voice uses a single call session key: `SESSION_KEY`.
+- SMS uses per-sender sessions: `agent:<AGENT_ID>:sms:<senderNumber>`.
+- `thinking: "off"` is used for low-latency phone behavior.
+- Response timeout is 30s for both voice and SMS handling.
 
 ## Troubleshooting
 
-| Problem | Fix |
-|---------|-----|
-| "Not connected" | OpenClaw gateway isn't running. `openclaw gateway start` |
-| ngrok 502 | Voice bridge crashed. Restart `node server.mjs` |
-| No response on call | Check bridge logs for errors. Verify `/health` returns `connected: true` |
-| Slow responses | `thinking: "off"` is already set. If still slow, the model may be overloaded |
-| Webhook URL expired | ngrok restarted. Get new URL and PATCH the number |
+### Bridge says not connected
 
-## SMS — Read and Reply to Text Messages
+Cause: OpenClaw gateway is not reachable/authenticated.
 
-SMS works like email — **pull-based, no ngrok needed**. Messages arrive at the AgentNumber server. You poll the API for new texts and reply via the API. All outbound HTTP from your end.
+Check:
 
-### Check for New Texts
+- gateway running
+- `GATEWAY_URL` port
+- `GATEWAY_TOKEN`
 
-```bash
-curl "https://agentnumber.vercel.app/api/v0/sms?direction=inbound&status=received" \
-  -H "Authorization: Bearer <API_KEY>"
-```
+### Calls hit AgentNumber but no bridge response
 
-This returns inbound messages that haven't been replied to yet. The `status=received` filter gives you only unreplied messages.
+Cause: Number `webhook_url` is wrong or not publicly reachable.
 
-You can also filter by time to only get recent messages:
+Check:
 
-```bash
-curl "https://agentnumber.vercel.app/api/v0/sms?direction=inbound&status=received&since=2026-03-06T00:00:00Z" \
-  -H "Authorization: Bearer <API_KEY>"
-```
+- number config `webhook_url`
+- bridge `/health`
+- ingress/tunnel status
 
-### Reply to a Text
+### SMS polling enabled but no replies
 
-```bash
-curl -X POST https://agentnumber.vercel.app/api/v0/sms \
-  -H "Authorization: Bearer <API_KEY>" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "from": "<NUMBER_ID>",
-    "to": "+1XXXXXXXXXX",
-    "body": "Your reply here"
-  }'
-```
+Check:
 
-When you send a reply, all inbound messages from that customer are automatically marked as `"replied"` so they won't show up in the `status=received` query again.
+- `AN_API_KEY` and `AN_NUMBER_ID`
+- inbound messages visible via AgentNumber API
+- Twilio compliance (A2P 10DLC/Toll-Free verification) for US delivery
 
-### Send a Text (Outbound)
+### Twilio 30034 / US 10DLC errors
 
-Same endpoint, just text whoever you want:
+Not a bridge bug. Outbound US delivery is blocked until A2P registration (or toll-free path) is completed.
 
-```bash
-curl -X POST https://agentnumber.vercel.app/api/v0/sms \
-  -H "Authorization: Bearer <API_KEY>" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "from": "<NUMBER_ID>",
-    "to": "+1XXXXXXXXXX",
-    "body": "Hey, just reaching out!"
-  }'
-```
+## When To Use This Skill
 
-### SMS Workflow for Agents
+Use this skill when users ask:
 
-When your operator asks you to "check your texts" or "respond to messages", do this:
-
-1. **Poll for unreplied messages**:
-   ```bash
-   curl "https://agentnumber.vercel.app/api/v0/sms?direction=inbound&status=received" \
-     -H "Authorization: Bearer <API_KEY>"
-   ```
-
-2. **For each message**, read the `body` and `from` fields, compose a reply
-
-3. **Send the reply**:
-   ```bash
-   curl -X POST https://agentnumber.vercel.app/api/v0/sms \
-     -H "Authorization: Bearer <API_KEY>" \
-     -H "Content-Type: application/json" \
-     -d '{"from": "<NUMBER_ID>", "to": "<customer_phone>", "body": "<your reply>"}'
-   ```
-
-4. The inbound message is automatically marked as replied
-
-### SMS Pricing
-
-- Outbound: $0.02 per message
-- Inbound: $0.01 per message
-
-## Checking Your Balance and History
-
-```bash
-# Credits balance
-curl https://agentnumber.vercel.app/api/v0/credits/balance \
-  -H "Authorization: Bearer <API_KEY>"
-
-# Recent calls
-curl https://agentnumber.vercel.app/api/v0/calls \
-  -H "Authorization: Bearer <API_KEY>"
-
-# Recent texts
-curl https://agentnumber.vercel.app/api/v0/sms \
-  -H "Authorization: Bearer <API_KEY>"
-
-# Call transcript
-curl https://agentnumber.vercel.app/api/v0/calls/<CALL_ID>/transcript \
-  -H "Authorization: Bearer <API_KEY>"
-```
+- "How does the OpenClaw bridge work?"
+- "Why aren't calls or SMS reaching my agent?"
+- "How do I wire AgentNumber number webhooks to OpenClaw?"
+- "How do I enable/disable SMS polling?"
