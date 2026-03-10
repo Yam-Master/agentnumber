@@ -151,7 +151,7 @@ function handleRequest(
           minProtocol: 3,
           maxProtocol: 3,
           client: {
-            id: "tunnel-client",
+            id: "gateway-client",
             displayName: "AgentNumber Tunnel",
             version: "1.0.0",
             platform: "node",
