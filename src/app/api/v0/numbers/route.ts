@@ -24,10 +24,14 @@ export const POST = withApiAuth(async (request: NextRequest, ctx: ApiContext) =>
     metadata = {},
   } = body;
 
+  if (!["autopilot", "webhook", "managed_bridge"].includes(inbound_mode)) {
+    return apiError("inbound_mode must be autopilot, webhook, or managed_bridge", "validation_error", 400);
+  }
+
   // Must provide either webhook_url (bring your own server) or system_prompt (managed)
-  if (!webhook_url && !system_prompt) {
+  if (!webhook_url && !system_prompt && inbound_mode !== "managed_bridge") {
     return apiError(
-      "Provide webhook_url (your agent's endpoint) or system_prompt (managed by AgentNumber).",
+      "Provide webhook_url (your agent's endpoint), system_prompt, or use inbound_mode=managed_bridge.",
       "validation_error",
       400
     );
@@ -83,7 +87,9 @@ export const POST = withApiAuth(async (request: NextRequest, ctx: ApiContext) =>
       ? `https://${process.env.VERCEL_URL}`
       : "https://agentnumber.vercel.app");
 
-  const llmUrl = webhook_url || `${baseUrl}/api/v0/voice/${numberRecord.id}`;
+  const llmUrl = inbound_mode === "managed_bridge"
+    ? `${baseUrl}/api/v0/voice/${numberRecord.id}`
+    : (webhook_url || `${baseUrl}/api/v0/voice/${numberRecord.id}`);
 
   // 4. Create Vapi assistant in custom-LLM mode
   const assistant = await vapi.assistants.create({

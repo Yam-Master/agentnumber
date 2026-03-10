@@ -49,13 +49,33 @@ export const PATCH = withApiAuth(async (request: NextRequest, ctx: ApiContext & 
     }
   }
 
+  if (
+    updates.inbound_mode !== undefined &&
+    !["autopilot", "webhook", "managed_bridge"].includes(String(updates.inbound_mode))
+  ) {
+    return apiError("inbound_mode must be autopilot, webhook, or managed_bridge", "validation_error", 400);
+  }
+
   if (Object.keys(updates).length === 0) {
     return apiError("No valid fields to update", "validation_error", 400);
   }
 
   // Sync to Vapi assistant if relevant fields changed
   const vapiUpdate: Record<string, unknown> = {};
-  if (updates.webhook_url) {
+  const baseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    (process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : "https://agentnumber.vercel.app");
+  const nextInboundMode = (updates.inbound_mode as string | undefined) || existing.inbound_mode;
+
+  if (nextInboundMode === "managed_bridge") {
+    vapiUpdate.model = {
+      provider: "custom-llm",
+      url: `${baseUrl}/api/v0/voice/${existing.id}`,
+      model: "custom",
+    };
+  } else if (updates.webhook_url) {
     vapiUpdate.model = {
       provider: "custom-llm",
       url: updates.webhook_url,

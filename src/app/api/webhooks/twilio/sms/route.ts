@@ -3,9 +3,12 @@ import { createServiceClient } from "@/lib/supabase/server";
 import { debitCredits } from "@/lib/credits/operations";
 import { deliverWebhooks } from "@/lib/webhooks/deliver";
 import { toPublicId } from "@/lib/api/ids";
+import { runManagedBridge } from "@/lib/openclaw-bridge";
+import { sendSms } from "@/lib/twilio";
 import crypto from "crypto";
 
 const SMS_INBOUND_COST_CENTS = 1; // $0.01 per inbound SMS
+const SMS_OUTBOUND_COST_CENTS = 2; // $0.02 per outbound SMS
 
 function buildCandidateUrls(request: NextRequest): string[] {
   const candidates = new Set<string>();
@@ -97,7 +100,7 @@ export async function POST(request: NextRequest) {
 
     const { data: numberRows } = await supabase
       .from("numbers")
-      .select("id, org_id, phone_number")
+      .select("id, org_id, phone_number, inbound_mode")
       .eq("phone_number", to)
       .eq("status", "active")
       .order("created_at", { ascending: false })
@@ -153,6 +156,70 @@ export async function POST(request: NextRequest) {
         to: number.phone_number,
         body,
       }).catch(() => {});
+
+      if (number.inbound_mode === "managed_bridge") {
+        const { data: bridge } = await supabase
+          .from("managed_bridge_connections")
+          .select("gateway_url, gateway_token, agent_id, enabled, sms_autoreply, voice_rules, sms_rules")
+          .eq("org_id", number.org_id)
+          .single();
+
+        if (bridge?.enabled && bridge?.sms_autoreply) {
+          try {
+            const reply = await runManagedBridge({
+              config: {
+                gateway_url: bridge.gateway_url as string,
+                gateway_token: bridge.gateway_token as string,
+                agent_id: (bridge.agent_id as string) || "main",
+                voice_rules: (bridge.voice_rules as string | null) ?? null,
+                sms_rules: (bridge.sms_rules as string | null) ?? null,
+              },
+              sessionKey: `agent:${(bridge.agent_id as string) || "main"}:sms:${from}`,
+              message: body,
+              mode: "sms",
+            });
+
+            const cleanReply = reply.trim();
+            if (cleanReply) {
+              const sent = await sendSms(number.phone_number as string, from, cleanReply);
+
+              const { data: outbound } = await supabase
+                .from("sms_messages")
+                .insert({
+                  org_id: number.org_id,
+                  number_id: number.id,
+                  direction: "outbound",
+                  customer_number: from,
+                  body: cleanReply,
+                  status: sent.status || "sent",
+                  twilio_sid: sent.sid,
+                  cost_cents: SMS_OUTBOUND_COST_CENTS,
+                  metadata: { source: "managed_bridge" },
+                })
+                .select()
+                .single();
+
+              if (outbound) {
+                await debitCredits(
+                  number.org_id,
+                  SMS_OUTBOUND_COST_CENTS,
+                  "Outbound SMS (managed bridge)",
+                  outbound.id,
+                  "sms"
+                );
+                await deliverWebhooks(number.org_id, "sms.sent", {
+                  message_id: toPublicId("msg", outbound.id),
+                  from: number.phone_number,
+                  to: from,
+                  body: cleanReply,
+                }).catch(() => {});
+              }
+            }
+          } catch (err) {
+            console.error("Managed bridge SMS autoreply failed:", err);
+          }
+        }
+      }
     }
 
     return new NextResponse(twimlEmpty(), { headers: { "Content-Type": "text/xml" } });
