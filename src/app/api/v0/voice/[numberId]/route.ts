@@ -1,7 +1,8 @@
 import { NextRequest } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { createServiceClient } from "@/lib/supabase/server";
-import { runManagedBridge } from "@/lib/openclaw-bridge";
+import { decrypt } from "@/lib/crypto";
+import { openClawRequest } from "@/lib/openclaw";
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY!,
@@ -14,10 +15,9 @@ export async function POST(
   const { numberId } = await params;
   const supabase = createServiceClient();
 
-  // Look up the number to get the system prompt
   const { data: number } = await supabase
     .from("numbers")
-    .select("id, org_id, system_prompt, status, inbound_mode")
+    .select("system_prompt, status, voice_mode, gateway_url, gateway_token_encrypted, gateway_agent_id, gateway_session_key")
     .eq("id", numberId)
     .single();
 
@@ -28,95 +28,153 @@ export async function POST(
     });
   }
 
-  // Parse Vapi's OpenAI-compatible request
   const body = await request.json();
   const messages: { role: string; content: string }[] = body.messages || [];
 
-  if (number.inbound_mode === "managed_bridge") {
-    const { data: bridge } = await supabase
-      .from("managed_bridge_connections")
-      .select("gateway_url, gateway_token, agent_id, enabled, voice_rules, sms_rules")
-      .eq("org_id", number.org_id)
-      .single();
+  if (number.voice_mode === "gateway") {
+    return handleGateway(number, messages, body.stream);
+  }
 
-    if (!bridge || bridge.enabled !== true) {
-      return new Response(JSON.stringify({ error: "Managed bridge not configured or disabled" }), {
-        status: 503,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
+  // Default: anthropic mode
+  return handleAnthropic(number, messages, body.stream);
+}
 
-    const userText = [...messages]
-      .reverse()
-      .find((m) => m.role === "user" && typeof m.content === "string" && m.content.trim())?.content
-      || "Hello";
+// ─── SSE Helpers ───
 
-    try {
-      const text = await runManagedBridge({
-        config: {
-          gateway_url: bridge.gateway_url as string,
-          gateway_token: bridge.gateway_token as string,
-          agent_id: (bridge.agent_id as string) || "main",
-          voice_rules: (bridge.voice_rules as string | null) ?? null,
-          sms_rules: (bridge.sms_rules as string | null) ?? null,
-        },
-        sessionKey: `agent:${(bridge.agent_id as string) || "main"}:phone:${number.id}`,
-        message: userText,
-        mode: "voice",
-      });
+function sseChunk(
+  chatId: string,
+  created: number,
+  delta: Record<string, unknown>,
+  finishReason: string | null = null
+) {
+  return `data: ${JSON.stringify({
+    id: chatId,
+    object: "chat.completion.chunk",
+    created,
+    model: "custom",
+    choices: [{ index: 0, delta, logprobs: null, finish_reason: finishReason }],
+  })}\n\n`;
+}
 
-      if (body.stream) {
-        const chatId = `chatcmpl-${Date.now()}`;
-        const created = Math.floor(Date.now() / 1000);
-        const sse = [
-          `data: ${JSON.stringify({ id: chatId, object: "chat.completion.chunk", created, model: "custom", choices: [{ index: 0, delta: { role: "assistant" }, logprobs: null, finish_reason: null }] })}`,
-          "",
-          `data: ${JSON.stringify({ id: chatId, object: "chat.completion.chunk", created, model: "custom", choices: [{ index: 0, delta: { content: text }, logprobs: null, finish_reason: null }] })}`,
-          "",
-          `data: ${JSON.stringify({ id: chatId, object: "chat.completion.chunk", created, model: "custom", choices: [{ index: 0, delta: {}, logprobs: null, finish_reason: "stop" }] })}`,
-          "",
-          "data: [DONE]",
-          "",
-        ].join("\n");
+// ─── Gateway Mode ───
 
-        return new Response(sse, {
-          headers: {
-            "Content-Type": "text/event-stream",
-            "Cache-Control": "no-cache, no-transform",
-            Connection: "keep-alive",
-            "X-Accel-Buffering": "no",
+function handleGateway(
+  number: Record<string, unknown>,
+  messages: { role: string; content: string }[],
+  stream: boolean
+) {
+  const lastUserMsg = messages.filter((m) => m.role === "user").pop();
+  const userText = lastUserMsg?.content || "Hello";
+
+  let gatewayToken: string;
+  try {
+    gatewayToken = decrypt(number.gateway_token_encrypted as string);
+  } catch {
+    return new Response(JSON.stringify({ error: "Gateway configuration error" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  const config = {
+    gatewayUrl: number.gateway_url as string,
+    gatewayToken,
+    agentId: number.gateway_agent_id as string,
+    sessionKey: (number.gateway_session_key as string) || `agent:${number.gateway_agent_id}:phone`,
+  };
+
+  const encoder = new TextEncoder();
+
+  if (stream) {
+    const chatId = `chatcmpl-${Date.now()}`;
+    const created = Math.floor(Date.now() / 1000);
+    let sentLength = 0;
+
+    const readable = new ReadableStream({
+      start(controller) {
+        // Initial role chunk (OpenAI spec)
+        controller.enqueue(encoder.encode(sseChunk(chatId, created, { role: "assistant" })));
+
+        openClawRequest(
+          config,
+          { message: userText },
+          {
+            onDelta(cumulativeText) {
+              const newPart = cumulativeText.slice(sentLength);
+              if (newPart) {
+                sentLength = cumulativeText.length;
+                controller.enqueue(encoder.encode(sseChunk(chatId, created, { content: newPart })));
+              }
+            },
+            onFinal(text) {
+              if (text) {
+                const remaining = text.slice(sentLength);
+                if (remaining) {
+                  controller.enqueue(encoder.encode(sseChunk(chatId, created, { content: remaining })));
+                }
+              }
+              controller.enqueue(encoder.encode(sseChunk(chatId, created, {}, "stop")));
+              controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+              controller.close();
+            },
+            onError() {
+              controller.enqueue(encoder.encode(
+                sseChunk(chatId, created, { content: "Sorry, I'm having trouble right now." })
+              ));
+              controller.enqueue(encoder.encode(sseChunk(chatId, created, {}, "stop")));
+              controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+              controller.close();
+            },
           },
-        });
-      }
+          55000
+        );
+      },
+    });
 
+    return new Response(readable, {
+      headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache, no-transform",
+        Connection: "keep-alive",
+        "X-Accel-Buffering": "no",
+      },
+    });
+  } else {
+    // Non-streaming gateway
+    return (async () => {
+      let fullText = "";
+      await openClawRequest(
+        config,
+        { message: userText },
+        {
+          onDelta(text) { fullText = text; },
+          onFinal(text) { if (text) fullText = text; },
+          onError() { fullText = fullText || "Sorry, I'm having trouble right now."; },
+        },
+        55000
+      );
       return new Response(
         JSON.stringify({
           id: `chatcmpl-${Date.now()}`,
           object: "chat.completion",
           created: Math.floor(Date.now() / 1000),
           model: "custom",
-          choices: [
-            {
-              index: 0,
-              message: { role: "assistant", content: text },
-              logprobs: null,
-              finish_reason: "stop",
-            },
-          ],
+          choices: [{ index: 0, message: { role: "assistant", content: fullText }, logprobs: null, finish_reason: "stop" }],
         }),
         { headers: { "Content-Type": "application/json" } }
       );
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Managed bridge failed";
-      return new Response(JSON.stringify({ error: message }), {
-        status: 503,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
+    })();
   }
+}
 
-  // Convert to Anthropic format
-  const systemPrompt = number.system_prompt || "You are a helpful phone assistant. Keep responses concise and conversational.";
+// ─── Anthropic Mode ───
+
+async function handleAnthropic(
+  number: Record<string, unknown>,
+  messages: { role: string; content: string }[],
+  stream: boolean
+) {
+  const systemPrompt = (number.system_prompt as string) || "You are a helpful phone assistant. Keep responses concise and conversational.";
   const anthropicMessages = messages
     .filter((m) => m.role === "user" || m.role === "assistant")
     .map((m) => ({
@@ -124,14 +182,12 @@ export async function POST(
       content: m.content,
     }));
 
-  // Ensure messages alternate and start with user
   if (anthropicMessages.length === 0 || anthropicMessages[0].role !== "user") {
     anthropicMessages.unshift({ role: "user", content: "Hello" });
   }
 
-  if (body.stream) {
-    // SSE streaming response
-    const stream = await anthropic.messages.stream({
+  if (stream) {
+    const anthropicStream = await anthropic.messages.stream({
       model: "claude-sonnet-4-20250514",
       max_tokens: 300,
       system: systemPrompt,
@@ -142,34 +198,24 @@ export async function POST(
     const chatId = `chatcmpl-${Date.now()}`;
     const created = Math.floor(Date.now() / 1000);
 
-    function sseChunk(delta: Record<string, unknown>, finishReason: string | null = null) {
-      return `data: ${JSON.stringify({
-        id: chatId,
-        object: "chat.completion.chunk",
-        created,
-        model: "custom",
-        choices: [{ index: 0, delta, logprobs: null, finish_reason: finishReason }],
-      })}\n\n`;
-    }
-
     const readable = new ReadableStream({
       async start(controller) {
         try {
           // Initial role chunk (OpenAI spec)
-          controller.enqueue(encoder.encode(sseChunk({ role: "assistant" })));
+          controller.enqueue(encoder.encode(sseChunk(chatId, created, { role: "assistant" })));
 
-          for await (const event of stream) {
+          for await (const event of anthropicStream) {
             if (
               event.type === "content_block_delta" &&
               event.delta.type === "text_delta"
             ) {
               controller.enqueue(
-                encoder.encode(sseChunk({ content: event.delta.text }))
+                encoder.encode(sseChunk(chatId, created, { content: event.delta.text }))
               );
             }
           }
 
-          controller.enqueue(encoder.encode(sseChunk({}, "stop")));
+          controller.enqueue(encoder.encode(sseChunk(chatId, created, {}, "stop")));
           controller.enqueue(encoder.encode("data: [DONE]\n\n"));
           controller.close();
         } catch (err) {
@@ -188,7 +234,6 @@ export async function POST(
       },
     });
   } else {
-    // Non-streaming
     const response = await anthropic.messages.create({
       model: "claude-sonnet-4-20250514",
       max_tokens: 300,

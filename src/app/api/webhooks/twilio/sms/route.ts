@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { debitCredits } from "@/lib/credits/operations";
 import { deliverWebhooks } from "@/lib/webhooks/deliver";
-import { toPublicId } from "@/lib/api/ids";
-import { runManagedBridge } from "@/lib/openclaw-bridge";
 import { sendSms } from "@/lib/twilio";
+import { decrypt } from "@/lib/crypto";
+import { openClawRequest } from "@/lib/openclaw";
+import { toPublicId } from "@/lib/api/ids";
 import crypto from "crypto";
 
 const SMS_INBOUND_COST_CENTS = 1; // $0.01 per inbound SMS
@@ -100,7 +101,7 @@ export async function POST(request: NextRequest) {
 
     const { data: numberRows } = await supabase
       .from("numbers")
-      .select("id, org_id, phone_number, inbound_mode")
+      .select("id, org_id, phone_number, voice_mode, inbound_mode, gateway_url, gateway_token_encrypted, gateway_agent_id, gateway_session_key")
       .eq("phone_number", to)
       .eq("status", "active")
       .order("created_at", { ascending: false })
@@ -157,67 +158,78 @@ export async function POST(request: NextRequest) {
         body,
       }).catch(() => {});
 
-      if (number.inbound_mode === "managed_bridge") {
-        const { data: bridge } = await supabase
-          .from("managed_bridge_connections")
-          .select("gateway_url, gateway_token, agent_id, enabled, sms_autoreply, voice_rules, sms_rules")
-          .eq("org_id", number.org_id)
-          .single();
+      // Auto-reply via gateway if configured
+      if (
+        number.voice_mode === "gateway" &&
+        number.inbound_mode === "autopilot" &&
+        number.gateway_url &&
+        number.gateway_token_encrypted &&
+        number.gateway_agent_id
+      ) {
+        try {
+          const gatewayToken = decrypt(number.gateway_token_encrypted);
+          const smsSessionKey = (number.gateway_session_key as string) ||
+            `agent:${number.gateway_agent_id}:sms:${from}`;
+          // Use per-sender session key for SMS threads
+          const sessionKey = smsSessionKey.includes(":sms:")
+            ? smsSessionKey
+            : `${smsSessionKey}:sms:${from}`;
 
-        if (bridge?.enabled && bridge?.sms_autoreply) {
-          try {
-            const reply = await runManagedBridge({
-              config: {
-                gateway_url: bridge.gateway_url as string,
-                gateway_token: bridge.gateway_token as string,
-                agent_id: (bridge.agent_id as string) || "main",
-                voice_rules: (bridge.voice_rules as string | null) ?? null,
-                sms_rules: (bridge.sms_rules as string | null) ?? null,
-              },
-              sessionKey: `agent:${(bridge.agent_id as string) || "main"}:sms:${from}`,
+          let replyText = "";
+          await openClawRequest(
+            {
+              gatewayUrl: number.gateway_url,
+              gatewayToken,
+              agentId: number.gateway_agent_id,
+              sessionKey,
+            },
+            {
               message: body,
-              mode: "sms",
-            });
+              extraSystemPrompt:
+                "You are replying to an SMS text message. Keep responses under 320 characters. No markdown or formatting. Be conversational and natural.",
+            },
+            {
+              onDelta(text) { replyText = text; },
+              onFinal(text) { if (text) replyText = text; },
+              onError() {},
+            },
+            12000 // 12s timeout (under Twilio's 15s)
+          );
 
-            const cleanReply = reply.trim();
-            if (cleanReply) {
-              const sent = await sendSms(number.phone_number as string, from, cleanReply);
+          if (replyText) {
+            const { sid: replySid } = await sendSms(number.phone_number, from, replyText);
 
-              const { data: outbound } = await supabase
-                .from("sms_messages")
-                .insert({
-                  org_id: number.org_id,
-                  number_id: number.id,
-                  direction: "outbound",
-                  customer_number: from,
-                  body: cleanReply,
-                  status: sent.status || "sent",
-                  twilio_sid: sent.sid,
-                  cost_cents: SMS_OUTBOUND_COST_CENTS,
-                  metadata: { source: "managed_bridge" },
-                })
-                .select()
-                .single();
+            const { data: outbound } = await supabase.from("sms_messages").insert({
+              org_id: number.org_id,
+              number_id: number.id,
+              direction: "outbound",
+              customer_number: from,
+              body: replyText,
+              status: "sent",
+              twilio_sid: replySid,
+              cost_cents: SMS_OUTBOUND_COST_CENTS,
+              metadata: { source: "managed_bridge" },
+            }).select().single();
 
-              if (outbound) {
-                await debitCredits(
-                  number.org_id,
-                  SMS_OUTBOUND_COST_CENTS,
-                  "Outbound SMS (managed bridge)",
-                  outbound.id,
-                  "sms"
-                );
-                await deliverWebhooks(number.org_id, "sms.sent", {
-                  message_id: toPublicId("msg", outbound.id),
-                  from: number.phone_number,
-                  to: from,
-                  body: cleanReply,
-                }).catch(() => {});
-              }
+            if (outbound) {
+              await debitCredits(number.org_id, SMS_OUTBOUND_COST_CENTS, "Auto-reply SMS", outbound.id, "sms");
+
+              await deliverWebhooks(number.org_id, "sms.sent", {
+                message_id: toPublicId("msg", outbound.id),
+                from: number.phone_number,
+                to: from,
+                body: replyText,
+              }).catch(() => {});
             }
-          } catch (err) {
-            console.error("Managed bridge SMS autoreply failed:", err);
+
+            await supabase
+              .from("sms_messages")
+              .update({ status: "replied" })
+              .eq("id", smsRecord.id);
           }
+        } catch (err) {
+          console.error("Gateway SMS auto-reply error:", err);
+          // Non-fatal — inbound SMS already stored
         }
       }
     }

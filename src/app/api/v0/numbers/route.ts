@@ -6,6 +6,7 @@ import { createServiceClient } from "@/lib/supabase/server";
 import { findAvailableNumber, buyNumber, updateNumberWebhooks, TWILIO_SID, TWILIO_TOKEN } from "@/lib/twilio";
 import { vapi } from "@/lib/vapi";
 import { rateLimit } from "@/lib/rate-limit";
+import { encrypt } from "@/lib/crypto";
 import type { ApiContext } from "@/lib/auth/types";
 
 export const POST = withApiAuth(async (request: NextRequest, ctx: ApiContext) => {
@@ -22,20 +23,32 @@ export const POST = withApiAuth(async (request: NextRequest, ctx: ApiContext) =>
     first_message,
     inbound_mode = "autopilot",
     metadata = {},
+    gateway_url,
+    gateway_token,
+    gateway_agent_id,
+    gateway_session_key,
   } = body;
 
-  if (!["autopilot", "webhook", "managed_bridge"].includes(inbound_mode)) {
-    return apiError("inbound_mode must be autopilot, webhook, or managed_bridge", "validation_error", 400);
-  }
-
-  // Must provide either webhook_url (bring your own server) or system_prompt (managed)
-  if (!webhook_url && !system_prompt && inbound_mode !== "managed_bridge") {
+  // Must provide one of: gateway config, webhook_url, or system_prompt
+  if (!webhook_url && !system_prompt && !gateway_url) {
     return apiError(
-      "Provide webhook_url (your agent's endpoint), system_prompt, or use inbound_mode=managed_bridge.",
+      "Provide gateway_url + gateway_token + gateway_agent_id (OpenClaw bridge), webhook_url (your agent's endpoint), or system_prompt (managed by AgentNumber).",
       "validation_error",
       400
     );
   }
+
+  // Validate gateway config completeness
+  if (gateway_url && (!gateway_token || !gateway_agent_id)) {
+    return apiError(
+      "gateway_url requires gateway_token and gateway_agent_id.",
+      "validation_error",
+      400
+    );
+  }
+
+  // Determine voice_mode
+  const voice_mode = gateway_url ? "gateway" : webhook_url ? "webhook" : "anthropic";
 
   // 1. Find and buy a Twilio number
   let e164Number: string;
@@ -66,6 +79,11 @@ export const POST = withApiAuth(async (request: NextRequest, ctx: ApiContext) =>
       voice_id,
       inbound_mode,
       webhook_url: webhook_url || null,
+      voice_mode,
+      gateway_url: gateway_url || null,
+      gateway_token_encrypted: gateway_token ? encrypt(gateway_token) : null,
+      gateway_agent_id: gateway_agent_id || null,
+      gateway_session_key: gateway_session_key || null,
       metadata,
       vapi_assistant_id: "pending",
       vapi_phone_number_id: "pending",
@@ -79,17 +97,17 @@ export const POST = withApiAuth(async (request: NextRequest, ctx: ApiContext) =>
   }
 
   // 3. Determine the LLM URL for Vapi
-  // webhook_url = agent's own server (custom LLM mode)
-  // system_prompt = AgentNumber's managed voice endpoint
+  // webhook mode: user's own server
+  // gateway/anthropic: AgentNumber's managed voice endpoint
   const baseUrl =
     process.env.NEXT_PUBLIC_SITE_URL ||
     (process.env.VERCEL_URL
       ? `https://${process.env.VERCEL_URL}`
       : "https://agentnumber.vercel.app");
 
-  const llmUrl = inbound_mode === "managed_bridge"
-    ? `${baseUrl}/api/v0/voice/${numberRecord.id}`
-    : (webhook_url || `${baseUrl}/api/v0/voice/${numberRecord.id}`);
+  const llmUrl = voice_mode === "webhook"
+    ? webhook_url
+    : `${baseUrl}/api/v0/voice/${numberRecord.id}`;
 
   // 4. Create Vapi assistant in custom-LLM mode
   const assistant = await vapi.assistants.create({
@@ -169,10 +187,14 @@ function formatNumber(n: Record<string, unknown>) {
   return {
     id: toPublicId("num", n.id as string),
     phone_number: n.phone_number,
+    voice_mode: n.voice_mode,
     system_prompt: n.system_prompt,
     first_message: n.first_message,
     voice_id: n.voice_id,
     webhook_url: n.webhook_url,
+    gateway_url: n.gateway_url,
+    gateway_agent_id: n.gateway_agent_id,
+    gateway_session_key: n.gateway_session_key,
     inbound_mode: n.inbound_mode,
     metadata: n.metadata,
     status: n.status,

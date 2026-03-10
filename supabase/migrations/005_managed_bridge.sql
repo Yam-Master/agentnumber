@@ -1,25 +1,10 @@
--- Managed OpenClaw bridge configuration per organization
+ALTER TABLE numbers ADD COLUMN IF NOT EXISTS voice_mode text NOT NULL DEFAULT 'anthropic';
+ALTER TABLE numbers ADD COLUMN IF NOT EXISTS gateway_url text;
+ALTER TABLE numbers ADD COLUMN IF NOT EXISTS gateway_token_encrypted text;
+ALTER TABLE numbers ADD COLUMN IF NOT EXISTS gateway_agent_id text;
+ALTER TABLE numbers ADD COLUMN IF NOT EXISTS gateway_session_key text;
 
-create table if not exists managed_bridge_connections (
-  org_id uuid primary key references organizations(id) on delete cascade,
-  gateway_url text not null,
-  gateway_token text not null,
-  agent_id text not null default 'main',
-  enabled boolean not null default true,
-  sms_autoreply boolean not null default false,
-  voice_rules text,
-  sms_rules text,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
-);
+ALTER TABLE numbers ADD CONSTRAINT chk_gateway_config
+  CHECK (voice_mode != 'gateway' OR (gateway_url IS NOT NULL AND gateway_token_encrypted IS NOT NULL AND gateway_agent_id IS NOT NULL));
 
-create index if not exists idx_managed_bridge_connections_enabled
-  on managed_bridge_connections(enabled);
-
-alter table managed_bridge_connections enable row level security;
-
-drop policy if exists "Service role manages managed_bridge_connections" on managed_bridge_connections;
-create policy "Service role manages managed_bridge_connections"
-  on managed_bridge_connections for all
-  using (auth.role() = 'service_role')
-  with check (auth.role() = 'service_role');
+UPDATE numbers SET voice_mode = 'webhook' WHERE webhook_url IS NOT NULL AND voice_mode = 'anthropic';

@@ -4,6 +4,7 @@ import { apiSuccess, apiError } from "@/lib/api/response";
 import { toPublicId, fromPublicId } from "@/lib/api/ids";
 import { createServiceClient } from "@/lib/supabase/server";
 import { vapi } from "@/lib/vapi";
+import { encrypt } from "@/lib/crypto";
 import type { ApiContext } from "@/lib/auth/types";
 
 export const GET = withApiAuth(async (_request: NextRequest, ctx: ApiContext & { params?: Record<string, string> }) => {
@@ -41,7 +42,11 @@ export const PATCH = withApiAuth(async (request: NextRequest, ctx: ApiContext & 
     return apiError("Number not found", "not_found", 404);
   }
 
-  const allowedFields = ["system_prompt", "first_message", "voice_id", "inbound_mode", "webhook_url", "metadata"];
+  const allowedFields = [
+    "system_prompt", "first_message", "voice_id", "inbound_mode",
+    "webhook_url", "metadata", "gateway_url", "gateway_token",
+    "gateway_agent_id", "gateway_session_key",
+  ];
   const updates: Record<string, unknown> = {};
   for (const field of allowedFields) {
     if (field in body) {
@@ -49,39 +54,54 @@ export const PATCH = withApiAuth(async (request: NextRequest, ctx: ApiContext & 
     }
   }
 
-  if (
-    updates.inbound_mode !== undefined &&
-    !["autopilot", "webhook", "managed_bridge"].includes(String(updates.inbound_mode))
-  ) {
-    return apiError("inbound_mode must be autopilot, webhook, or managed_bridge", "validation_error", 400);
+  // Encrypt gateway token before storing
+  if (updates.gateway_token) {
+    updates.gateway_token_encrypted = encrypt(updates.gateway_token as string);
+    delete updates.gateway_token;
   }
 
   if (Object.keys(updates).length === 0) {
     return apiError("No valid fields to update", "validation_error", 400);
   }
 
+  // Determine new voice_mode based on resulting state
+  const resultingGatewayUrl = (updates.gateway_url ?? existing.gateway_url) as string | null;
+  const resultingGatewayToken = (updates.gateway_token_encrypted ?? existing.gateway_token_encrypted) as string | null;
+  const resultingGatewayAgentId = (updates.gateway_agent_id ?? existing.gateway_agent_id) as string | null;
+  const resultingWebhookUrl = (updates.webhook_url ?? existing.webhook_url) as string | null;
+
+  let newVoiceMode: string;
+  if (resultingGatewayUrl && resultingGatewayToken && resultingGatewayAgentId) {
+    newVoiceMode = "gateway";
+  } else if (resultingWebhookUrl) {
+    newVoiceMode = "webhook";
+  } else {
+    newVoiceMode = "anthropic";
+  }
+  updates.voice_mode = newVoiceMode;
+
   // Sync to Vapi assistant if relevant fields changed
-  const vapiUpdate: Record<string, unknown> = {};
   const baseUrl =
     process.env.NEXT_PUBLIC_SITE_URL ||
     (process.env.VERCEL_URL
       ? `https://${process.env.VERCEL_URL}`
       : "https://agentnumber.vercel.app");
-  const nextInboundMode = (updates.inbound_mode as string | undefined) || existing.inbound_mode;
 
-  if (nextInboundMode === "managed_bridge") {
+  const vapiUpdate: Record<string, unknown> = {};
+
+  // Determine if LLM URL needs updating
+  const oldVoiceMode = existing.voice_mode || "anthropic";
+  if (newVoiceMode !== oldVoiceMode || updates.webhook_url) {
+    const llmUrl = newVoiceMode === "webhook"
+      ? resultingWebhookUrl
+      : `${baseUrl}/api/v0/voice/${uuid}`;
     vapiUpdate.model = {
       provider: "custom-llm",
-      url: `${baseUrl}/api/v0/voice/${existing.id}`,
-      model: "custom",
-    };
-  } else if (updates.webhook_url) {
-    vapiUpdate.model = {
-      provider: "custom-llm",
-      url: updates.webhook_url,
+      url: llmUrl,
       model: "custom",
     };
   }
+
   if (updates.voice_id) {
     vapiUpdate.voice = { provider: "11labs", voiceId: updates.voice_id };
   }
@@ -140,10 +160,14 @@ function formatNumber(n: Record<string, unknown>) {
   return {
     id: toPublicId("num", n.id as string),
     phone_number: n.phone_number,
+    voice_mode: n.voice_mode,
     system_prompt: n.system_prompt,
     first_message: n.first_message,
     voice_id: n.voice_id,
     webhook_url: n.webhook_url,
+    gateway_url: n.gateway_url,
+    gateway_agent_id: n.gateway_agent_id,
+    gateway_session_key: n.gateway_session_key,
     inbound_mode: n.inbound_mode,
     metadata: n.metadata,
     status: n.status,
