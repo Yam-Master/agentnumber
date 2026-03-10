@@ -32,7 +32,7 @@ function extractText(chatMsg: { content?: string | Array<{ type: string; text?: 
 }
 
 export function isRelayUrl(url: string): boolean {
-  return url.startsWith("https://relay.") || url.startsWith("http://relay.");
+  return url.includes("relay") && !url.includes("localhost:18785");
 }
 
 export function openClawRequest(

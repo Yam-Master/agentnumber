@@ -13,7 +13,7 @@ function getArg(name: string): string | undefined {
 }
 
 const token = getArg("token");
-const relayUrl = getArg("relay") || "wss://relay.agentnumber.com/tunnel";
+const relayUrl = getArg("relay") || "wss://agentnumber-relay.fly.dev/tunnel";
 const gatewayUrl = getArg("gateway") || "ws://localhost:18785";
 
 if (!token) {
