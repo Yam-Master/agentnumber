@@ -116,7 +116,8 @@ function handleGateway(
               controller.enqueue(encoder.encode("data: [DONE]\n\n"));
               controller.close();
             },
-            onError() {
+            onError(msg) {
+              console.error("Voice gateway error:", msg);
               controller.enqueue(encoder.encode(
                 sseChunk(chatId, created, { content: "Sorry, I'm having trouble right now." })
               ));

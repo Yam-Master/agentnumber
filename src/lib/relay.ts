@@ -115,6 +115,7 @@ export function relayRequest(
             finish();
             return;
           } else if (event.type === "error") {
+            console.error("Relay SSE error event:", event.message);
             callbacks.onError(event.message || "Relay request failed");
             finish();
             return;
