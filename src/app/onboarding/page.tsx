@@ -249,6 +249,19 @@ function StepAddCredits({ onNext }: { apiKey: string; onNext: () => void }) {
   const [topUpAmount, setTopUpAmount] = useState("");
   const [topUpLoading, setTopUpLoading] = useState(false);
   const [topUpError, setTopUpError] = useState("");
+  const [balance, setBalance] = useState(0);
+
+  // Poll balance every 5s to detect incoming payments
+  useEffect(() => {
+    const check = () =>
+      fetch("/api/credits/balance")
+        .then((r) => r.json())
+        .then((j) => setBalance(j.balance_cents ?? 0))
+        .catch(() => {});
+    check();
+    const interval = setInterval(check, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleTopUp = async (amount: number) => {
     setTopUpLoading(true);
@@ -380,16 +393,24 @@ function StepAddCredits({ onNext }: { apiKey: string; onNext: () => void }) {
           )}
         </div>
 
-        <button
-          onClick={onNext}
-          className="w-full bg-accent hover:bg-accent-dim text-white font-bold py-3 uppercase tracking-widest text-sm transition-colors"
-        >
-          Next: Get a Number &rarr;
-        </button>
+        {balance > 0 ? (
+          <button
+            onClick={onNext}
+            className="w-full bg-accent hover:bg-accent-dim text-white font-bold py-3 uppercase tracking-widest text-sm transition-colors"
+          >
+            Next: Get a Number &rarr;
+          </button>
+        ) : (
+          <div className="w-full border-3 border-border py-3 text-center text-xs font-bold uppercase tracking-widest text-foreground/50">
+            Top up to continue
+          </div>
+        )}
 
-        <p className="text-xs text-foreground text-center uppercase tracking-wider">
-          You can add credits later from the dashboard
-        </p>
+        {balance > 0 && (
+          <p className="text-xs text-accent text-center uppercase tracking-wider font-bold">
+            Balance: ${(balance / 100).toFixed(2)}
+          </p>
+        )}
       </div>
     </div>
   );
