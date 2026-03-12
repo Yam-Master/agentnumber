@@ -1,22 +1,16 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { LogoMark } from "@/components/logo";
-
-const DIGITS = "0123456789";
 
 export default function OnboardingPage() {
   const [step, setStep] = useState(0);
   const [apiKey, setApiKey] = useState("");
   const [keyName, setKeyName] = useState("");
   const [creatingKey, setCreatingKey] = useState(false);
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [areaCode, setAreaCode] = useState("941");
-  const [provisioning, setProvisioning] = useState(false);
   const [error, setError] = useState("");
-  const [showSuccess, setShowSuccess] = useState(false);
   const router = useRouter();
 
   // Check auth + onboarding status
@@ -62,42 +56,7 @@ export default function OnboardingPage() {
     setCreatingKey(false);
   }
 
-  async function handleProvision() {
-    setProvisioning(true);
-    setError("");
-    try {
-      const key = apiKey || localStorage.getItem("an_onboarding_key");
-      if (!key) {
-        setError("No API key found. Go back and create one.");
-        setProvisioning(false);
-        return;
-      }
-
-      const provRes = await fetch("/api/v0/numbers", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${key}`,
-        },
-        body: JSON.stringify({
-          area_code: areaCode,
-          system_prompt: "You are a helpful AI assistant.",
-        }),
-      });
-      const data = await provRes.json();
-      if (!provRes.ok) {
-        setError(data.error?.message || data.error || "Failed to provision number");
-        setProvisioning(false);
-        return;
-      }
-      setPhoneNumber(data.data?.phone_number || "+1 (941) 555-0173");
-      setStep(3);
-      setShowSuccess(true);
-    } catch {
-      setError("Network error");
-    }
-    setProvisioning(false);
-  }
+  const steps = ["01 // API KEY", "02 // CREDITS", "03 // CONNECT AGENT"];
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -117,7 +76,7 @@ export default function OnboardingPage() {
 
       {/* Progress */}
       <div className="flex border-b-3 border-border">
-        {["01 // API KEY", "02 // CREDITS", "03 // SMS NUMBER"].map((label, i) => (
+        {steps.map((label, i) => (
           <div
             key={i}
             className={`flex-1 py-3 px-6 text-xs font-bold uppercase tracking-widest border-r-3 border-border last:border-r-0 transition-colors ${
@@ -154,17 +113,8 @@ export default function OnboardingPage() {
           />
         )}
         {step === 2 && (
-          <StepProvisionNumber
-            areaCode={areaCode}
-            setAreaCode={setAreaCode}
-            loading={provisioning}
-            error={error}
-            onProvision={handleProvision}
-          />
-        )}
-        {step === 3 && showSuccess && (
-          <StepSuccess
-            phoneNumber={phoneNumber}
+          <StepAgentPrompt
+            apiKey={apiKey || localStorage.getItem("an_onboarding_key") || ""}
             onDashboard={() => router.push("/dashboard")}
           />
         )}
@@ -398,7 +348,7 @@ function StepAddCredits({ onNext }: { apiKey: string; onNext: () => void }) {
             onClick={onNext}
             className="w-full bg-accent hover:bg-accent-dim text-white font-bold py-3 uppercase tracking-widest text-sm transition-colors"
           >
-            Next: Get a Number &rarr;
+            Next: Connect Your Agent &rarr;
           </button>
         ) : (
           <div className="w-full border-3 border-border py-3 text-center text-xs font-bold uppercase tracking-widest text-foreground/50">
@@ -416,157 +366,102 @@ function StepAddCredits({ onNext }: { apiKey: string; onNext: () => void }) {
   );
 }
 
-function StepProvisionNumber({
-  areaCode, setAreaCode, loading, error, onProvision,
-}: {
-  areaCode: string;
-  setAreaCode: (v: string) => void;
-  loading: boolean;
-  error: string;
-  onProvision: () => void;
-}) {
+function StepAgentPrompt({ apiKey, onDashboard }: { apiKey: string; onDashboard: () => void }) {
+  const [copied, setCopied] = useState(false);
+  const maskedKey = apiKey ? `${apiKey.slice(0, 16)}...${apiKey.slice(-4)}` : "YOUR_API_KEY";
+
+  const agentPrompt = `You have an AgentNumber account. Use it to get a phone number with voice and SMS capabilities.
+
+## Credentials
+- API Base URL: https://www.agentsnumber.com/api/v0
+- API Key: ${apiKey || "YOUR_API_KEY"}
+
+## Step 1: Set Up OpenClaw Gateway
+Run your OpenClaw gateway locally:
+\`\`\`
+openclaw gateway start
+\`\`\`
+Note your gateway token and agent ID from the OpenClaw dashboard.
+
+## Step 2: Start the Tunnel
+The tunnel connects your local gateway to AgentNumber (no ngrok needed):
+\`\`\`
+npx @agentnumber/tunnel --token <your_gateway_token>
+\`\`\`
+Keep this running.
+
+## Step 3: Provision a Phone Number
+\`\`\`
+curl -X POST https://www.agentsnumber.com/api/v0/numbers \\
+  -H "Authorization: Bearer ${apiKey || "YOUR_API_KEY"}" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "area_code": "941",
+    "gateway_url": "https://agentnumber-relay.fly.dev",
+    "gateway_token": "<your_gateway_token>",
+    "gateway_agent_id": "<your_agent_id>"
+  }'
+\`\`\`
+
+## Available APIs
+- **Send SMS**: POST /api/v0/sms — \`{"from": "number_id", "to": "+1234567890", "body": "Hello"}\`
+- **Make Call**: POST /api/v0/calls — \`{"from": "number_id", "to": "+1234567890"}\`
+- **Check Balance**: GET /api/v0/credits/balance
+- **List Numbers**: GET /api/v0/numbers
+
+## Pricing
+- Outbound SMS: $0.02/msg | Inbound SMS: $0.01/msg
+- Outbound Call: $0.05/min | Inbound Call: $0.03/min
+- Number: $1.50/month
+
+All requests use Bearer token auth: \`Authorization: Bearer ${apiKey || "YOUR_API_KEY"}\``;
+
   return (
-    <div className="w-full max-w-lg">
-      <h1 className="text-2xl font-bold uppercase tracking-wider mb-2">Get Your SMS Number</h1>
+    <div className="w-full max-w-2xl">
+      <h1 className="text-2xl font-bold uppercase tracking-wider mb-2">Connect Your Agent</h1>
       <p className="text-sm text-foreground mb-8 uppercase tracking-wider">
-        Provision a real US phone number for SMS
+        Copy this prompt and give it to your agent
       </p>
 
-      <div className="border-3 border-border p-8 space-y-5">
-        <div>
-          <label className="block text-xs text-foreground mb-1.5 uppercase tracking-widest">Area Code</label>
-          <input
-            type="text"
-            value={areaCode}
-            onChange={(e) => setAreaCode(e.target.value.replace(/\D/g, "").slice(0, 3))}
-            placeholder="941"
-            maxLength={3}
-            className="w-full bg-transparent border-3 border-border px-4 py-3 text-foreground placeholder:text-foreground/40 text-sm focus:outline-none focus:border-accent tracking-wider"
-          />
+      <div className="space-y-4">
+        <div className="border-3 border-accent p-6">
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-xs text-accent font-bold uppercase tracking-widest">
+              Agent Setup Prompt
+            </p>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(agentPrompt);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+              }}
+              className="text-xs text-accent hover:underline uppercase tracking-widest font-bold"
+            >
+              {copied ? "Copied!" : "Copy Prompt"}
+            </button>
+          </div>
+
+          <div className="bg-black border-3 border-border p-4 max-h-80 overflow-y-auto">
+            <pre className="text-xs text-foreground whitespace-pre-wrap break-words leading-relaxed font-mono">
+              {agentPrompt}
+            </pre>
+          </div>
         </div>
 
-        <div className="border-t-3 border-border pt-4 space-y-1">
-          <div className="flex justify-between text-xs">
-            <span className="text-foreground uppercase tracking-wider">Number cost</span>
-            <span className="font-bold text-accent">$5.00 USDC</span>
-          </div>
-          <div className="flex justify-between text-xs">
-            <span className="text-foreground uppercase tracking-wider">Includes</span>
-            <span className="font-bold">SMS (Send + Receive)</span>
-          </div>
-          <div className="flex justify-between text-xs">
-            <span className="text-foreground uppercase tracking-wider">Voice</span>
-            <span className="font-bold">Set up later in dashboard</span>
+        <div className="border-3 border-border p-4">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-foreground uppercase tracking-widest">Your API Key</span>
+            <code className="text-xs text-accent">{maskedKey}</code>
           </div>
         </div>
 
         <button
-          onClick={onProvision}
-          disabled={loading}
-          className="w-full bg-accent hover:bg-accent-dim disabled:opacity-50 text-white font-bold py-3 uppercase tracking-widest text-sm transition-colors"
+          onClick={onDashboard}
+          className="w-full bg-accent hover:bg-accent-dim text-white font-bold py-4 uppercase tracking-widest text-sm transition-colors"
         >
-          {loading ? "Provisioning..." : "Provision SMS Number — $5"}
+          Go to Dashboard &rarr;
         </button>
-
-        {error && <p className="text-accent text-xs text-center">{error}</p>}
       </div>
-    </div>
-  );
-}
-
-function StepSuccess({ phoneNumber, onDashboard }: { phoneNumber: string; onDashboard: () => void }) {
-  const displayRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    localStorage.removeItem("an_onboarding_key");
-  }, []);
-
-  useEffect(() => {
-    const el = displayRef.current;
-    if (!el) return;
-
-    const target = phoneNumber;
-    const chars = target.split("");
-    const positions: number[] = [];
-    for (let i = 0; i < chars.length; i++) {
-      if (DIGITS.includes(chars[i])) positions.push(i);
-    }
-    let iterations = 0;
-    const maxIterations = 25;
-    const settled: number[] = [];
-    const interval = setInterval(() => {
-      iterations++;
-      const display = chars.slice();
-      for (let p = 0; p < positions.length; p++) {
-        const idx = positions[p];
-        if (settled.includes(idx)) continue;
-        if (iterations > maxIterations - positions.length + p) {
-          settled.push(idx);
-          continue;
-        }
-        display[idx] = DIGITS[Math.floor(Math.random() * 10)];
-      }
-      el.textContent = display.join("");
-      if (settled.length === positions.length) {
-        clearInterval(interval);
-        el.textContent = target;
-      }
-    }, 50);
-
-    return () => clearInterval(interval);
-  }, [phoneNumber]);
-
-  return (
-    <div className="w-full max-w-lg text-center">
-      <div className="border-3 border-accent p-12 mb-8 relative overflow-hidden">
-        {/* Decorative corners */}
-        <div className="absolute top-0 left-0 w-8 h-8 border-b-3 border-r-3 border-accent" />
-        <div className="absolute top-0 right-0 w-8 h-8 border-b-3 border-l-3 border-accent" />
-        <div className="absolute bottom-0 left-0 w-8 h-8 border-t-3 border-r-3 border-accent" />
-        <div className="absolute bottom-0 right-0 w-8 h-8 border-t-3 border-l-3 border-accent" />
-
-        <div className="text-xs text-accent font-bold uppercase tracking-widest mb-6">
-          Number Provisioned Successfully
-        </div>
-
-        <div className="text-xs text-foreground uppercase tracking-widest mb-2">
-          Your Agent&apos;s Number
-        </div>
-
-        <div
-          ref={displayRef}
-          className="text-4xl font-bold text-foreground tracking-wider mb-4"
-        >
-          {phoneNumber}
-        </div>
-
-        <div className="text-xs text-accent uppercase tracking-widest font-bold">
-          Active &bull; SMS Ready
-        </div>
-
-        <div className="mt-8 flex justify-center gap-4">
-          <div className="text-center">
-            <div className="text-xs text-foreground uppercase tracking-widest">SMS</div>
-            <div className="text-sm font-bold text-accent">$0.02 / msg</div>
-          </div>
-          <div className="w-px bg-border" />
-          <div className="text-center">
-            <div className="text-xs text-foreground uppercase tracking-widest">Voice</div>
-            <div className="text-sm font-bold text-foreground">Set up in dashboard</div>
-          </div>
-        </div>
-      </div>
-
-      <button
-        onClick={onDashboard}
-        className="w-full bg-accent hover:bg-accent-dim text-white font-bold py-4 uppercase tracking-widest text-sm transition-colors"
-      >
-        Go to Dashboard &rarr;
-      </button>
-
-      <p className="text-xs text-foreground mt-4 uppercase tracking-wider">
-        You can manage your number from the dashboard
-      </p>
     </div>
   );
 }
