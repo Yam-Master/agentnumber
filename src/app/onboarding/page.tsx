@@ -240,48 +240,144 @@ function StepCreateKey({
   );
 }
 
+const WALLET_ADDRESS = "0xA60F138E080e9Def57176fCD1a731343079a86F9";
+const QUICK_AMOUNTS = [10, 25, 50, 100];
+
 function StepAddCredits({ onNext }: { apiKey: string; onNext: () => void }) {
   const [copied, setCopied] = useState(false);
-  const payAddress = process.env.NEXT_PUBLIC_PAY_TO_ADDRESS || "0x0000000000000000000000000000000000000000";
+  const [payMethod, setPayMethod] = useState<"card" | "crypto">("card");
+  const [topUpAmount, setTopUpAmount] = useState("");
+  const [topUpLoading, setTopUpLoading] = useState(false);
+  const [topUpError, setTopUpError] = useState("");
+
+  const handleTopUp = async (amount: number) => {
+    setTopUpLoading(true);
+    setTopUpError("");
+    try {
+      const res = await fetch("/api/credits/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setTopUpError(json.error || "Failed to create checkout");
+        return;
+      }
+      window.location.href = json.checkout_url;
+    } catch {
+      setTopUpError("Something went wrong");
+    } finally {
+      setTopUpLoading(false);
+    }
+  };
 
   return (
     <div className="w-full max-w-lg">
       <h1 className="text-2xl font-bold uppercase tracking-wider mb-2">Add Credits</h1>
       <p className="text-sm text-foreground mb-8 uppercase tracking-wider">
-        Fund your account to provision numbers
+        $1 = $1 credit &middot; Fund your account to provision numbers
       </p>
 
       <div className="space-y-4">
-        <div className="border-3 border-border p-6">
-          <h3 className="text-xs font-bold uppercase tracking-widest text-accent mb-4">
-            Send USDC on Base
-          </h3>
-          <p className="text-xs text-foreground mb-3 uppercase tracking-wider">
-            Send USDC to this address on Base L2:
-          </p>
-          <div className="bg-black border-3 border-border px-4 py-3 flex items-center justify-between gap-2">
-            <code className="text-xs break-all">{payAddress}</code>
-            <button
-              onClick={() => {
-                navigator.clipboard.writeText(payAddress);
-                setCopied(true);
-                setTimeout(() => setCopied(false), 2000);
-              }}
-              className="text-xs text-accent uppercase tracking-widest font-bold shrink-0"
-            >
-              {copied ? "Copied" : "Copy"}
-            </button>
-          </div>
-          <div className="mt-4 space-y-1">
-            <div className="flex justify-between text-xs">
-              <span className="text-foreground uppercase tracking-wider">$5 USDC</span>
-              <span className="font-bold">=500 credits</span>
-            </div>
-            <div className="flex justify-between text-xs">
-              <span className="text-foreground uppercase tracking-wider">$10 USDC</span>
-              <span className="font-bold">=1000 credits</span>
+        <div className="border-3 border-border p-6 space-y-5">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-bold uppercase tracking-widest">Payment Method</h3>
+            <div className="flex border-2 border-border">
+              <button
+                onClick={() => setPayMethod("card")}
+                className={`px-4 py-1.5 text-xs font-bold uppercase tracking-widest transition-colors ${
+                  payMethod === "card" ? "bg-accent text-background" : "hover:text-accent"
+                }`}
+              >
+                Card
+              </button>
+              <button
+                onClick={() => setPayMethod("crypto")}
+                className={`px-4 py-1.5 text-xs font-bold uppercase tracking-widest border-l-2 border-border transition-colors ${
+                  payMethod === "crypto" ? "bg-accent text-background" : "hover:text-accent"
+                }`}
+              >
+                USDC
+              </button>
             </div>
           </div>
+
+          {payMethod === "card" ? (
+            <>
+              <div className="flex gap-3 flex-wrap">
+                {QUICK_AMOUNTS.map((amt) => (
+                  <button
+                    key={amt}
+                    onClick={() => handleTopUp(amt)}
+                    disabled={topUpLoading}
+                    className="px-5 py-2 border-2 border-border text-xs font-bold uppercase tracking-widest hover:border-accent hover:text-accent transition-colors disabled:opacity-50"
+                  >
+                    ${amt}
+                  </button>
+                ))}
+              </div>
+              <div className="flex gap-3 items-center">
+                <span className="text-xs text-foreground uppercase tracking-widest">Custom:</span>
+                <div className="flex items-center border-2 border-border">
+                  <span className="px-2 text-xs text-foreground">$</span>
+                  <input
+                    type="number"
+                    min="5"
+                    max="500"
+                    value={topUpAmount}
+                    onChange={(e) => setTopUpAmount(e.target.value)}
+                    placeholder="5-500"
+                    className="w-24 bg-transparent px-2 py-2 text-sm outline-none"
+                  />
+                </div>
+                <button
+                  onClick={() => {
+                    const amt = parseInt(topUpAmount);
+                    if (amt >= 5 && amt <= 500) handleTopUp(amt);
+                    else setTopUpError("Enter an amount between $5 and $500");
+                  }}
+                  disabled={topUpLoading}
+                  className="px-5 py-2 bg-accent text-background text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-opacity disabled:opacity-50"
+                >
+                  {topUpLoading ? "Loading..." : "Top Up"}
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-xs text-foreground uppercase tracking-wider">
+                Send USDC on Base to the address below.
+              </p>
+              <div>
+                <span className="text-xs text-foreground uppercase tracking-widest block mb-1">Network</span>
+                <span className="text-sm font-bold">Base (Mainnet)</span>
+              </div>
+              <div>
+                <span className="text-xs text-foreground uppercase tracking-widest block mb-1">Wallet Address</span>
+                <div className="bg-black border-3 border-border px-4 py-3 flex items-center justify-between gap-2">
+                  <code className="text-xs text-accent break-all">{WALLET_ADDRESS}</code>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(WALLET_ADDRESS);
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 2000);
+                    }}
+                    className="text-xs text-accent uppercase tracking-widest font-bold shrink-0"
+                  >
+                    {copied ? "Copied" : "Copy"}
+                  </button>
+                </div>
+              </div>
+              <p className="text-xs text-foreground uppercase tracking-wider">
+                $10 USDC per x402 request &middot; Requires API key
+              </p>
+            </div>
+          )}
+
+          {topUpError && (
+            <p className="text-accent text-xs uppercase tracking-widest">{topUpError}</p>
+          )}
         </div>
 
         <button
