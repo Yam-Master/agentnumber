@@ -11,6 +11,7 @@ export default function SignupPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
   const router = useRouter();
 
   async function handleSignup(e: React.FormEvent) {
@@ -31,7 +32,8 @@ export default function SignupPage() {
       return;
     }
 
-    router.push("/onboarding");
+    setEmailSent(true);
+    setLoading(false);
   }
 
   async function handleGoogleSignup() {
@@ -53,60 +55,77 @@ export default function SignupPage() {
         </Link>
 
         <div className="border-3 border-border p-8">
-          <h1 className="text-lg font-bold uppercase tracking-widest text-center mb-6">
-            Create Account
-          </h1>
+          {emailSent ? (
+            <div className="text-center space-y-4">
+              <h1 className="text-lg font-bold uppercase tracking-widest">
+                Check Your Email
+              </h1>
+              <p className="text-sm text-foreground uppercase tracking-wider">
+                We sent a confirmation link to
+              </p>
+              <p className="text-sm font-bold text-accent break-all">{email}</p>
+              <p className="text-xs text-foreground uppercase tracking-wider">
+                Click the link to verify your account and start onboarding.
+              </p>
+            </div>
+          ) : (
+            <>
+              <h1 className="text-lg font-bold uppercase tracking-widest text-center mb-6">
+                Create Account
+              </h1>
 
-          <button
-            onClick={handleGoogleSignup}
-            className="w-full border-3 border-border bg-transparent hover:bg-surface text-foreground font-bold py-3 uppercase tracking-wider text-sm transition-colors mb-4"
-          >
-            Continue with Google
-          </button>
+              <button
+                onClick={handleGoogleSignup}
+                className="w-full border-3 border-border bg-transparent hover:bg-surface text-foreground font-bold py-3 uppercase tracking-wider text-sm transition-colors mb-4"
+              >
+                Continue with Google
+              </button>
 
-          <div className="flex items-center gap-3 my-4">
-            <div className="flex-1 h-px bg-border" />
-            <span className="text-xs text-foreground uppercase tracking-widest">or</span>
-            <div className="flex-1 h-px bg-border" />
-          </div>
+              <div className="flex items-center gap-3 my-4">
+                <div className="flex-1 h-px bg-border" />
+                <span className="text-xs text-foreground uppercase tracking-widest">or</span>
+                <div className="flex-1 h-px bg-border" />
+              </div>
 
-          <form onSubmit={handleSignup} className="space-y-3">
-            <input
-              type="email"
-              placeholder="EMAIL"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full bg-transparent border-3 border-border px-4 py-3 text-foreground placeholder:text-foreground/40 text-sm uppercase tracking-wider focus:outline-none focus:border-accent"
-            />
-            <input
-              type="password"
-              placeholder="PASSWORD (MIN 6 CHARS)"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={6}
-              className="w-full bg-transparent border-3 border-border px-4 py-3 text-foreground placeholder:text-foreground/40 text-sm uppercase tracking-wider focus:outline-none focus:border-accent"
-            />
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-accent hover:bg-accent-dim disabled:opacity-50 text-white font-bold py-3 uppercase tracking-widest text-sm transition-colors"
-            >
-              {loading ? "Creating..." : "Create Account"}
-            </button>
-          </form>
+              <form onSubmit={handleSignup} className="space-y-3">
+                <input
+                  type="email"
+                  placeholder="EMAIL"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="w-full bg-transparent border-3 border-border px-4 py-3 text-foreground placeholder:text-foreground/40 text-sm uppercase tracking-wider focus:outline-none focus:border-accent"
+                />
+                <input
+                  type="password"
+                  placeholder="PASSWORD (MIN 6 CHARS)"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  className="w-full bg-transparent border-3 border-border px-4 py-3 text-foreground placeholder:text-foreground/40 text-sm uppercase tracking-wider focus:outline-none focus:border-accent"
+                />
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-accent hover:bg-accent-dim disabled:opacity-50 text-white font-bold py-3 uppercase tracking-widest text-sm transition-colors"
+                >
+                  {loading ? "Creating..." : "Create Account"}
+                </button>
+              </form>
 
-          {error && (
-            <p className="text-accent text-sm text-center mt-3">{error}</p>
+              {error && (
+                <p className="text-accent text-sm text-center mt-3">{error}</p>
+              )}
+
+              <p className="text-sm text-foreground text-center mt-6 uppercase tracking-wider">
+                Have an account?{" "}
+                <Link href="/login" className="text-accent hover:underline">
+                  Log in
+                </Link>
+              </p>
+            </>
           )}
-
-          <p className="text-sm text-foreground text-center mt-6 uppercase tracking-wider">
-            Have an account?{" "}
-            <Link href="/login" className="text-accent hover:underline">
-              Log in
-            </Link>
-          </p>
         </div>
       </div>
     </div>
