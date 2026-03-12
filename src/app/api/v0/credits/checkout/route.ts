@@ -4,21 +4,17 @@ import { apiSuccess, apiError } from "@/lib/api/response";
 import { getStripe } from "@/lib/stripe";
 import type { ApiContext } from "@/lib/auth/types";
 
-// Credit packs: amount in cents → price in dollars
-const PACKS: Record<number, number> = {
-  500: 5,    // $5 → 500 credits
-  1000: 10,  // $10 → 1000 credits
-  5000: 50,  // $50 → 5000 credits
-};
+const MIN_AMOUNT = 5;
+const MAX_AMOUNT = 500;
 
 export const POST = withApiAuth(async (request: NextRequest, ctx: ApiContext) => {
   const body = await request.json();
-  const { credits = 1000, success_url, cancel_url } = body;
+  const { amount, success_url, cancel_url } = body;
 
-  const priceDollars = PACKS[credits];
-  if (!priceDollars) {
+  const dollars = Number(amount);
+  if (!Number.isInteger(dollars) || dollars < MIN_AMOUNT || dollars > MAX_AMOUNT) {
     return apiError(
-      `Invalid credit amount. Choose from: ${Object.keys(PACKS).join(", ")}`,
+      `Amount must be a whole number between $${MIN_AMOUNT} and $${MAX_AMOUNT}.`,
       "validation_error",
       400
     );
@@ -32,10 +28,10 @@ export const POST = withApiAuth(async (request: NextRequest, ctx: ApiContext) =>
       {
         price_data: {
           currency: "usd",
-          unit_amount: priceDollars * 100,
+          unit_amount: dollars * 100,
           product_data: {
-            name: `${credits} AgentNumber Credits`,
-            description: `Top up ${credits} credits ($${priceDollars}.00)`,
+            name: `$${dollars} AgentNumber Credit`,
+            description: `Top up $${dollars} in credits`,
           },
         },
         quantity: 1,
@@ -43,7 +39,6 @@ export const POST = withApiAuth(async (request: NextRequest, ctx: ApiContext) =>
     ],
     metadata: {
       org_id: ctx.orgId,
-      credits: String(credits),
     },
     success_url: success_url || `${baseUrl}/dashboard/credits?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: cancel_url || `${baseUrl}/dashboard/credits`,

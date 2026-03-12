@@ -57,6 +57,30 @@ export async function buyNumber(
   return { sid: data.sid, phoneNumber: data.phone_number };
 }
 
+export async function releaseNumber(twilioSid: string): Promise<void> {
+  const url = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_SID}/IncomingPhoneNumbers/${twilioSid}.json`;
+  const res = await fetch(url, {
+    method: "DELETE",
+    headers: { Authorization: TWILIO_AUTH },
+  });
+  if (!res.ok && res.status !== 404) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error((data as Record<string, string>).message || "Failed to release number from Twilio");
+  }
+}
+
+export async function releaseNumberByPhone(phoneNumber: string): Promise<void> {
+  // Look up the Twilio SID by phone number
+  const params = new URLSearchParams({ PhoneNumber: phoneNumber });
+  const listUrl = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_SID}/IncomingPhoneNumbers.json?${params}`;
+  const listRes = await fetch(listUrl, { headers: { Authorization: TWILIO_AUTH } });
+  const listData = await listRes.json();
+  const sid = listData?.incoming_phone_numbers?.[0]?.sid;
+  if (sid) {
+    await releaseNumber(sid);
+  }
+}
+
 export async function updateNumberWebhooks(
   twilioSid: string,
   smsUrl: string

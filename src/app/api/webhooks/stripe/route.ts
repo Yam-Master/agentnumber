@@ -25,16 +25,16 @@ export async function POST(request: NextRequest) {
   if (event.type === "checkout.session.completed") {
     const session = event.data.object;
     const orgId = session.metadata?.org_id;
-    const credits = parseInt(session.metadata?.credits || "0", 10);
+    const amountCents = session.amount_total || 0;
 
-    if (orgId && credits > 0 && session.payment_status === "paid") {
-      const amountDollars = (session.amount_total || 0) / 100;
+    if (orgId && amountCents > 0 && session.payment_status === "paid") {
+      const dollars = amountCents / 100;
       await depositCredits(
         orgId,
-        credits,
-        `Stripe purchase: $${amountDollars.toFixed(2)}`
+        amountCents,
+        `Stripe top-up: $${dollars.toFixed(2)}`
       );
-      console.log(`Stripe: deposited ${credits} credits to org ${orgId}`);
+      console.log(`Stripe: deposited $${dollars.toFixed(2)} (${amountCents}¢) to org ${orgId}`);
     }
   }
 
