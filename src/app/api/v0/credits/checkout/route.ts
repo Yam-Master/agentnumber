@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { withApiAuth } from "@/lib/auth/with-api-auth";
 import { apiSuccess, apiError } from "@/lib/api/response";
-import { stripe } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 import type { ApiContext } from "@/lib/auth/types";
 
 // Credit packs: amount in cents → price in dollars
@@ -26,7 +26,7 @@ export const POST = withApiAuth(async (request: NextRequest, ctx: ApiContext) =>
 
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.agentsnumber.com";
 
-  const session = await stripe.checkout.sessions.create({
+  const session = await getStripe().checkout.sessions.create({
     mode: "payment",
     line_items: [
       {
