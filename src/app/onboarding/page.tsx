@@ -19,18 +19,25 @@ export default function OnboardingPage() {
   const [showSuccess, setShowSuccess] = useState(false);
   const router = useRouter();
 
-  // Check if user already completed onboarding
+  // Check auth + onboarding status
   useEffect(() => {
     Promise.all([
-      fetch("/api/api-keys").then(r => r.json()),
+      fetch("/api/api-keys").then(r => {
+        if (r.status === 401) throw new Error("not_authenticated");
+        return r.json();
+      }),
       fetch("/api/credits/balance").then(r => r.json()),
     ]).then(([keysData, balanceData]) => {
       const hasKeys = (keysData.data || []).length > 0;
       const hasBalance = (balanceData.balance_cents || 0) > 0;
       if (hasKeys && hasBalance) setStep(2);
       else if (hasKeys) setStep(1);
-    }).catch(() => {});
-  }, []);
+    }).catch((err) => {
+      if (err.message === "not_authenticated") {
+        router.push("/login");
+      }
+    });
+  }, [router]);
 
   async function handleCreateKey() {
     setCreatingKey(true);
