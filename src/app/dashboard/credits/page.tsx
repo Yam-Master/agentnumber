@@ -20,6 +20,7 @@ export default function CreditsPage() {
   const [topUpAmount, setTopUpAmount] = useState("");
   const [topUpLoading, setTopUpLoading] = useState(false);
   const [topUpError, setTopUpError] = useState("");
+  const [payMethod, setPayMethod] = useState<"card" | "crypto">("card");
 
   const fetchData = useCallback(async () => {
     const [balanceRes, ledgerRes] = await Promise.all([
@@ -88,49 +89,98 @@ export default function CreditsPage() {
       </div>
 
       {/* Top Up */}
-      <div className="border-3 border-border p-6 space-y-4">
-        <h2 className="text-xs font-bold uppercase tracking-widest">Top Up Credits</h2>
+      <div className="border-3 border-border p-6 space-y-5">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xs font-bold uppercase tracking-widest">Top Up Credits</h2>
+          <div className="flex border-2 border-border">
+            <button
+              onClick={() => setPayMethod("card")}
+              className={`px-4 py-1.5 text-xs font-bold uppercase tracking-widest transition-colors ${
+                payMethod === "card" ? "bg-accent text-background" : "hover:text-accent"
+              }`}
+            >
+              Card
+            </button>
+            <button
+              onClick={() => setPayMethod("crypto")}
+              className={`px-4 py-1.5 text-xs font-bold uppercase tracking-widest border-l-2 border-border transition-colors ${
+                payMethod === "crypto" ? "bg-accent text-background" : "hover:text-accent"
+              }`}
+            >
+              USDC
+            </button>
+          </div>
+        </div>
+
         <p className="text-xs text-foreground uppercase tracking-wider">$1 = $1 credit</p>
 
-        <div className="flex gap-3 flex-wrap">
-          {QUICK_AMOUNTS.map((amt) => (
-            <button
-              key={amt}
-              onClick={() => handleTopUp(amt)}
-              disabled={topUpLoading}
-              className="px-5 py-2 border-2 border-border text-xs font-bold uppercase tracking-widest hover:border-accent hover:text-accent transition-colors disabled:opacity-50"
-            >
-              ${amt}
-            </button>
-          ))}
-        </div>
+        {payMethod === "card" ? (
+          <>
+            <div className="flex gap-3 flex-wrap">
+              {QUICK_AMOUNTS.map((amt) => (
+                <button
+                  key={amt}
+                  onClick={() => handleTopUp(amt)}
+                  disabled={topUpLoading}
+                  className="px-5 py-2 border-2 border-border text-xs font-bold uppercase tracking-widest hover:border-accent hover:text-accent transition-colors disabled:opacity-50"
+                >
+                  ${amt}
+                </button>
+              ))}
+            </div>
 
-        <div className="flex gap-3 items-center">
-          <span className="text-xs text-foreground uppercase tracking-widest">Custom:</span>
-          <div className="flex items-center border-2 border-border">
-            <span className="px-2 text-xs text-foreground">$</span>
-            <input
-              type="number"
-              min="5"
-              max="500"
-              value={topUpAmount}
-              onChange={(e) => setTopUpAmount(e.target.value)}
-              placeholder="5-500"
-              className="w-24 bg-transparent px-2 py-2 text-sm outline-none"
-            />
+            <div className="flex gap-3 items-center">
+              <span className="text-xs text-foreground uppercase tracking-widest">Custom:</span>
+              <div className="flex items-center border-2 border-border">
+                <span className="px-2 text-xs text-foreground">$</span>
+                <input
+                  type="number"
+                  min="5"
+                  max="500"
+                  value={topUpAmount}
+                  onChange={(e) => setTopUpAmount(e.target.value)}
+                  placeholder="5-500"
+                  className="w-24 bg-transparent px-2 py-2 text-sm outline-none"
+                />
+              </div>
+              <button
+                onClick={() => {
+                  const amt = parseInt(topUpAmount);
+                  if (amt >= 5 && amt <= 500) handleTopUp(amt);
+                  else setTopUpError("Enter an amount between $5 and $500");
+                }}
+                disabled={topUpLoading}
+                className="px-5 py-2 bg-accent text-background text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-opacity disabled:opacity-50"
+              >
+                {topUpLoading ? "Loading..." : "Top Up"}
+              </button>
+            </div>
+          </>
+        ) : (
+          <div className="space-y-4">
+            <p className="text-xs text-foreground uppercase tracking-wider">
+              Send USDC on Base to the address below. Credits are added automatically via the x402 protocol.
+            </p>
+
+            <div className="space-y-3">
+              <div>
+                <span className="text-xs text-foreground uppercase tracking-widest block mb-1">Network</span>
+                <span className="text-sm font-bold">Base (Mainnet)</span>
+              </div>
+              <div>
+                <span className="text-xs text-foreground uppercase tracking-widest block mb-1">Wallet Address</span>
+                <code className="text-sm font-bold text-accent break-all">0xA60F138E080e9Def57176fCD1a731343079a86F9</code>
+              </div>
+              <div>
+                <span className="text-xs text-foreground uppercase tracking-widest block mb-1">API Endpoint</span>
+                <code className="text-xs text-foreground break-all">POST /api/v0/credits/purchase</code>
+                <p className="text-xs text-foreground mt-1 uppercase tracking-wider">
+                  $10 USDC per request &middot; Requires API key + x402 payment header
+                </p>
+              </div>
+            </div>
           </div>
-          <button
-            onClick={() => {
-              const amt = parseInt(topUpAmount);
-              if (amt >= 5 && amt <= 500) handleTopUp(amt);
-              else setTopUpError("Enter an amount between $5 and $500");
-            }}
-            disabled={topUpLoading}
-            className="px-5 py-2 bg-accent text-background text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-opacity disabled:opacity-50"
-          >
-            {topUpLoading ? "Loading..." : "Top Up"}
-          </button>
-        </div>
+        )}
 
         {topUpError && (
           <p className="text-accent text-xs uppercase tracking-widest">{topUpError}</p>

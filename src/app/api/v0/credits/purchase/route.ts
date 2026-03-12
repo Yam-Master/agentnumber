@@ -4,12 +4,11 @@ import { resourceServer, PAY_TO, NETWORK } from "@/lib/x402/config";
 import { authenticateApiKey } from "@/lib/auth/middleware";
 import { depositCredits } from "@/lib/credits/operations";
 
-// $10 pack = 1000 credits ($10.00)
-const CREDIT_PACK_CENTS = 1000;
+// $1 = 1 credit = 100 cents. x402 pays $10 USDC = $10 credit = 1000 cents
+const CREDIT_AMOUNT_CENTS = 1000;
 const PRICE_USDC = "$10.00";
 
 const handler = async (request: NextRequest): Promise<NextResponse> => {
-  // Auth: verify API key to know which org to credit
   const auth = await authenticateApiKey(request);
   if (!auth) {
     return NextResponse.json(
@@ -18,19 +17,17 @@ const handler = async (request: NextRequest): Promise<NextResponse> => {
     );
   }
 
-  // If we get here, payment was verified by x402 middleware
   const newBalance = await depositCredits(
     auth.orgId,
-    CREDIT_PACK_CENTS,
+    CREDIT_AMOUNT_CENTS,
     `x402 USDC purchase: ${PRICE_USDC}`
   );
 
   return NextResponse.json({
     success: true,
     data: {
-      deposited_cents: CREDIT_PACK_CENTS,
-      balance_cents: newBalance,
-      balance_dollars: (newBalance / 100).toFixed(2),
+      deposited: "$10.00",
+      balance: `$${(newBalance / 100).toFixed(2)}`,
     },
   });
 };
@@ -46,7 +43,7 @@ export const POST = withX402(
         payTo: PAY_TO,
       },
     ],
-    description: "Purchase 1000 credits ($10.00) for AgentNumber",
+    description: "Purchase $10 in AgentNumber credits with USDC",
     mimeType: "application/json",
   },
   resourceServer,
