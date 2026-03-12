@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description:
     "Voice + SMS for AI agents. Pay with USDC, get a phone number in under 5 minutes.",
   icons: {
-    icon: "/favicon.ico",
+    icon: "/icon.svg",
   },
   openGraph: {
     title: "AgentNumber",

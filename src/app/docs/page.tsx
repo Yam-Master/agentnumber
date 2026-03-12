@@ -1,10 +1,12 @@
 import Link from "next/link";
+import { LogoMark } from "@/components/logo";
 
 export default function DocsPage() {
   return (
     <div className="min-h-screen bg-background">
       <nav className="border-b-3 border-accent px-6 py-4 flex items-center justify-between bg-black">
-        <Link href="/" className="text-sm font-bold tracking-widest uppercase">
+        <Link href="/" className="text-sm font-bold tracking-widest uppercase flex items-center gap-2">
+          <LogoMark size={28} />
           AGENT<span className="text-accent">[NUMBER]</span>
         </Link>
         <div className="flex gap-6 items-center">
@@ -169,7 +171,8 @@ data: [DONE]`}</CodeBlock>
         </DocSection>
       </section>
 
-      <footer className="border-t-3 border-border py-6 text-center text-xs text-foreground uppercase tracking-widest">
+      <footer className="border-t-3 border-border py-6 flex items-center justify-center gap-2 text-xs text-foreground uppercase tracking-widest">
+        <LogoMark size={18} />
         AGENT[NUMBER] &copy; {new Date().getFullYear()}
       </footer>
     </div>

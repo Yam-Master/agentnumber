@@ -4,6 +4,7 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { LogoMark } from "@/components/logo";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -43,7 +44,8 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
-        <Link href="/" className="block text-center mb-8">
+        <Link href="/" className="flex flex-col items-center gap-3 mb-8">
+          <LogoMark size={48} />
           <span className="text-xl font-bold tracking-widest uppercase">
             AGENT<span className="text-accent">[NUMBER]</span>
           </span>

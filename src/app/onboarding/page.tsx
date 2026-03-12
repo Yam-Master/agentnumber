@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { LogoMark } from "@/components/logo";
 
 const DIGITS = "0123456789";
 
@@ -95,7 +96,8 @@ export default function OnboardingPage() {
     <div className="min-h-screen bg-background flex flex-col">
       {/* Nav */}
       <nav className="border-b-3 border-accent px-6 py-4 flex items-center justify-between bg-black">
-        <Link href="/" className="text-sm font-bold tracking-widest uppercase text-foreground">
+        <Link href="/" className="text-sm font-bold tracking-widest uppercase text-foreground flex items-center gap-2">
+          <LogoMark size={28} />
           AGENT<span className="text-accent">[NUMBER]</span>
         </Link>
         <button

@@ -4,13 +4,17 @@ import Link from "next/link";
 import "./landing.css";
 import PhoneSim from "@/components/landing/phone-sim";
 import TelegramDemo from "@/components/landing/telegram-demo";
+import { LogoMark } from "@/components/logo";
 
 export default function Home() {
   return (
     <div className="landing">
       {/* NAV */}
       <nav className="nav">
-        <Link href="/" className="nav-logo">AGENT<span>[NUMBER]</span></Link>
+        <Link href="/" className="nav-logo" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <LogoMark size={32} />
+          AGENT<span>[NUMBER]</span>
+        </Link>
         <div className="nav-links">
           <a href="#features">Features</a>
           <a href="#pricing">Pricing</a>
@@ -197,7 +201,10 @@ export default function Home() {
 
         {/* FOOTER */}
         <footer className="footer">
-          <span>AGENT[NUMBER] &copy; 2026</span>
+          <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <LogoMark size={20} />
+          AGENT[NUMBER] &copy; 2026
+        </span>
           <div className="footer-links">
             <Link href="/docs">Docs</Link>
             <a href="https://www.x402.org" target="_blank" rel="noopener noreferrer">x402</a>

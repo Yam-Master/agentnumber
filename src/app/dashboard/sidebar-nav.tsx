@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogoutButton } from "./logout-button";
+import { LogoMark } from "@/components/logo";
 
 const navItems = [
   { href: "/dashboard", label: "Overview" },
@@ -19,7 +20,8 @@ export function SidebarNav({ email }: { email: string }) {
   return (
     <aside className="fixed left-0 top-0 bottom-0 w-56 bg-black border-r-3 border-accent flex flex-col">
       <div className="px-5 py-4 border-b-3 border-border">
-        <Link href="/dashboard" className="text-sm font-bold tracking-widest uppercase text-foreground">
+        <Link href="/dashboard" className="text-sm font-bold tracking-widest uppercase text-foreground flex items-center gap-2">
+          <LogoMark size={24} />
           AGENT<span className="text-accent">[NUMBER]</span>
         </Link>
       </div>
