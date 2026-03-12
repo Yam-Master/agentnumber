@@ -47,7 +47,7 @@ export default function OnboardingPage() {
         localStorage.setItem("an_onboarding_key", json.key);
         setStep(1);
       } else {
-        setError("Failed to create API key");
+        setError(json.detail || json.error || "Failed to create API key");
       }
     } catch {
       setError("Network error");

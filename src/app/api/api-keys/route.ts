@@ -33,10 +33,23 @@ export async function POST(request: NextRequest) {
     }, { status: 201 });
   }
 
-  const orgId = await getOrgId();
+  let orgId: string | null;
+  try {
+    orgId = await getOrgId();
+  } catch (err) {
+    console.error("API key creation: getOrgId threw:", err);
+    return NextResponse.json({ error: "Auth error", detail: String(err) }, { status: 500 });
+  }
+
   if (!orgId) {
-    console.error("API key creation: no orgId — user not authenticated or no org membership");
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // Try to get more info about WHY there's no org
+    const supabase = await createClient();
+    const { data: { user }, error: authErr } = await supabase.auth.getUser();
+    console.error("API key creation: no orgId", { userId: user?.id, authErr: authErr?.message });
+    return NextResponse.json({
+      error: "No organization found",
+      detail: user ? `User ${user.id} has no org membership` : "Not authenticated",
+    }, { status: 401 });
   }
 
   const { key, prefix, hash } = generateApiKey();
