@@ -35,10 +35,20 @@ let shouldReconnect = true;
 
 function connect() {
   console.log(`Connecting to ${relayUrl}...`);
-  const ws = new WebSocket(relayUrl);
+  const ws = new WebSocket(relayUrl, {
+    // Send WS-level pings every 15s to keep connection alive through proxies
+    perMessageDeflate: false,
+  });
+
+  let connected = false;
 
   ws.on("open", () => {
     ws.send(JSON.stringify({ type: "auth", token }));
+  });
+
+  // Respond to WS protocol-level pings from relay server
+  ws.on("ping", () => {
+    ws.pong();
   });
 
   ws.on("message", (data) => {
@@ -50,6 +60,7 @@ function connect() {
     }
 
     if (msg.type === "auth_ok") {
+      connected = true;
       console.log("Authenticated. Tunnel active.");
       console.log("Your OpenClaw gateway is now reachable via AgentNumber.");
       reconnectDelay = 2000; // Reset backoff on successful auth
@@ -75,10 +86,12 @@ function connect() {
 
   ws.on("close", (code, reason) => {
     console.log(`Disconnected (${code}: ${reason.toString() || "unknown"})`);
+    // Always reset to fast reconnect — don't let backoff accumulate across sessions
+    if (connected) reconnectDelay = 2000;
     if (shouldReconnect) {
       console.log(`Reconnecting in ${reconnectDelay / 1000}s...`);
       setTimeout(connect, reconnectDelay);
-      reconnectDelay = Math.min(reconnectDelay * 2, MAX_RECONNECT_DELAY);
+      reconnectDelay = Math.min(reconnectDelay * 1.5, MAX_RECONNECT_DELAY);
     }
   });
 

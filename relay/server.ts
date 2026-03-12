@@ -154,20 +154,28 @@ wss.on("connection", (ws) => {
     }
   }, 10000);
 
-  // Heartbeat
+  // Heartbeat — use both WS-level and app-level pings
   let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
-  let pongReceived = true;
+  let alive = true;
 
   function startHeartbeat() {
     heartbeatTimer = setInterval(() => {
-      if (!pongReceived) {
+      if (!alive) {
         ws.close(4002, "Heartbeat timeout");
         return;
       }
-      pongReceived = false;
+      alive = false;
+      // WS protocol-level ping (keeps proxies/load balancers happy)
+      ws.ping();
+      // App-level ping (tunnel client responds with app-level pong)
       ws.send(JSON.stringify({ type: "ping" }));
-    }, 30000);
+    }, 20000); // every 20s instead of 30s
   }
+
+  // WS protocol-level pong resets alive flag
+  ws.on("pong", () => {
+    alive = true;
+  });
 
   ws.on("message", (data) => {
     let msg: Record<string, unknown>;
@@ -200,9 +208,9 @@ wss.on("connection", (ws) => {
       return;
     }
 
-    // Pong
+    // App-level pong
     if (msg.type === "pong") {
-      pongReceived = true;
+      alive = true;
       return;
     }
 
