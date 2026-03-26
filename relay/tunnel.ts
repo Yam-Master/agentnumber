@@ -86,6 +86,12 @@ function connect() {
 
   ws.on("close", (code, reason) => {
     console.log(`Disconnected (${code}: ${reason.toString() || "unknown"})`);
+    // Don't reconnect if replaced by another instance with same token
+    if (code === 4003) {
+      console.log("Replaced by new connection. Exiting.");
+      process.exit(0);
+      return;
+    }
     // Always reset to fast reconnect — don't let backoff accumulate across sessions
     if (connected) reconnectDelay = 2000;
     if (shouldReconnect) {
